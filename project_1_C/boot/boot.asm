@@ -52,9 +52,25 @@ section code
  ;   ret; return control to top of stack
 
 .switch:
-    mov bx, 0x1000; This is the location where code is lopaded from hard disk
+    mov ax, 0x4f01; querying the VBE
+    mov cx, 0x117; mode we want
+    mov bx, 0x0800; offset for the vbe infrastructure
+    mov es, bx
+    mov di, 0x00
+    int 0x10; graphiccs interupt
+
+    ; make switch to graphics mmode
+    mov ax, 0x4f02
+    mov bx, 0x117
+    int 0x10
+
+    xor ax, ax
+    mov ds, ax
+    mov es, ax
+
+    mov bx, 0x1000; This is the location where code is loaded from hard disk
     mov ah, 0x02
-    mov al, 30 ; number of sectors to read from hard disk
+    mov al, 1 ; number of sectors to read from hard disk(if you specify more sectors than are actually present on physical device it will crash w/o err)
     mov ch, 0x00
     mov dh, 0x00
     mov cl, 0x02
