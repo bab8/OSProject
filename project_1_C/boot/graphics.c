@@ -13,8 +13,10 @@ int rgb(int r, int g, int b){
 
 void Draw(int x, int y, int r, int g, int b){
     VBEInfoBlock* VBE = (VBEInfoBlock*) VBEInfoAddress;
+    unsigned short* buffer = (unsigned short*) ScreenBufferAddress;
+
     int index = y * VBE->x_resolution + x;
-    *((unsigned short*)VBE->screen_ptr + index) = rgb(r,g,b);
+    *(buffer + index) = rgb(r,g,b);
 }
 void ClearScreen(int r, int g, int b){
     VBEInfoBlock* VBE = (VBEInfoBlock*) VBEInfoAddress;
@@ -67,4 +69,19 @@ void DrawString(int (*f)(int,int), int font_width, int font_height, char* string
             j += font_height;
         }
     }
+}
+
+void Flush() {
+    VBEInfoBlock* VBE = (VBEInfoBlock*) VBEInfoAddress;
+    unsigned short* buffer = (unsigned short*) ScreenBufferAddress;
+    int index;
+
+    for(int y = 0; y < VBE->y_resolution;y++){
+        for(int x = 0; x < VBE->x_resolution;x++){
+            index  = y * VBE->x_resolution + x;
+            *((unsigned short*)VBE->screen_ptr + index) = *(buffer + index);
+        }
+    }
+
+
 }
