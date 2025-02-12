@@ -53,7 +53,7 @@ section code
 
 .switch:
     mov ax, 0x4f01; querying the VBE
-    mov cx, 0x117; mode we want
+    mov cx, 0x10e; mode we want(see vbe-modex file)
     mov bx, 0x0800; offset for the vbe infrastructure
     mov es, bx
     mov di, 0x00
@@ -61,7 +61,7 @@ section code
 
     ; make switch to graphics mmode
     mov ax, 0x4f02
-    mov bx, 0x117
+    mov bx, 0x10e
     int 0x10
 
     xor ax, ax
@@ -70,7 +70,7 @@ section code
 
     mov bx, 0x1000; This is the location where code is loaded from hard disk
     mov ah, 0x02
-    mov al, 1 ; number of sectors to read from hard disk(if you specify more sectors than are actually present on physical device it will crash w/o err)
+    mov al, 21 ; number of sectors to read from hard disk(if you specify more sectors than are actually present on physical device it will crash w/o err)
     mov ch, 0x00
     mov dh, 0x00
     mov cl, 0x02

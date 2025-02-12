@@ -1,5 +1,9 @@
 #include "graphics.h"
 
 int start(){
-   ClearScreen(255,255,255);
+   ClearScreen(90,90,90);
+
+   DrawCharacter();
+   
+   while(1);
 }
