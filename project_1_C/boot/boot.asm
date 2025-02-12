@@ -53,7 +53,7 @@ section code
 
 .switch:
     mov ax, 0x4f01; querying the VBE
-    mov cx, 0x10e; mode we want(see vbe-modex file)
+    mov cx, 0x111; mode we want(see vbe-modex file)
     mov bx, 0x0800; offset for the vbe infrastructure
     mov es, bx
     mov di, 0x00
@@ -61,7 +61,7 @@ section code
 
     ; make switch to graphics mmode
     mov ax, 0x4f02
-    mov bx, 0x10e
+    mov bx, 0x111
     int 0x10
 
     xor ax, ax

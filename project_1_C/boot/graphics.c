@@ -32,18 +32,39 @@ void DrawRect(int x, int y,int height, int width, int r, int g, int b){
     }
 }
 
-void DrawCharacter(){
-    for(int y = 0; y < font_arial_height; y++){
-        unsigned int row = getArialCharacter((int)('A'), y);
+void DrawCharacter(int (*f)(int,int), int font_width, int font_height, char character, int x, int y, int r, int g, int b){
+    for(int j = 0; j < font_height; j++){
+        unsigned int row = (*f)((int)(character), j);
         int shift = font_arial_width - 1;
         int bit_val = 0;
 
-        for(int x = 0; x < font_arial_width; x++){
+        for(int i = 0; i < font_width; i++){
             bit_val = (row >> shift) & 0b00000000000000000000000000000001;
             if(bit_val == 1){
-                Draw(x,y,255,255,255);
+                Draw(x + i,y + j,r,g,b);
             }
             shift -= 1;
+        }
+    }
+}
+
+void DrawString(int (*f)(int,int), int font_width, int font_height, char* string, int x, int y, int r, int g, int b){
+    //offsets
+    int i = 0;
+    int j = 0;
+
+    for(int k = 0; *(string + k) != 0; k++){
+        //draw current char
+        if(*(string + k) != '\n'){
+            DrawCharacter(f, font_width, font_height, *(string + k), x + i, y + j, r, g, b);
+        }
+        
+        //move offsets
+        i += font_width - (font_width / 4);
+
+        if(*(string + k) == '\n'){
+            i = 0;
+            j += font_height;
         }
     }
 }
