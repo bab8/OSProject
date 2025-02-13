@@ -1,7 +1,10 @@
 #include "graphics.h"
 
 int start(){
-  
+   VBEInfoBlock* VBE = (VBEInfoBlock*) VBEInfoAddress;
+
+   x = VBE->x_resolution / 2;
+   y = VBE->y_resolution / 2;
 
    //string literals cannot be more than 61 chars
    char str1[] = "Welcome to Sapphire OS! \n\nText rendered by custom library.";
@@ -17,7 +20,8 @@ int start(){
     ClearScreen(90,90,90);
     DrawString(getArialCharacter, font_arial_width, font_arial_height, p, 100,100,0,0,0);
 
-    DrawRect(x,y,10,10,0,0,0);
+    //DrawRect(x,y,10,10,0,0,0);
+    DrawMouse(x,y,200,0,200);
 
     Flush();
    }
