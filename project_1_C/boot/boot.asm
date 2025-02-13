@@ -57,7 +57,7 @@ section code
     mov bx, 0x0800; offset for the vbe infrastructure
     mov es, bx
     mov di, 0x00
-    int 0x10; graphiccs interupt
+    int 0x10; graphics interrupt
 
     ; make switch to graphics mmode
     mov ax, 0x4f02
@@ -70,7 +70,7 @@ section code
 
     mov bx, 0x1000; This is the location where code is loaded from hard disk
     mov ah, 0x02
-    mov al, 21 ; number of sectors to read from hard disk(if you specify more sectors than are actually present on physical device it will crash w/o err)
+    mov al, 25 ; number of sectors to read from hard disk(if you specify more sectors than are actually present on physical device it will crash w/o err), increment by 1 til it works
     mov ch, 0x00
     mov dh, 0x00
     mov cl, 0x02
