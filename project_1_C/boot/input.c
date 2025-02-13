@@ -5,6 +5,7 @@ int x, y;
 int left_clicked, right_clicked, middle_clicked;
 int current_byte = 0;
 uint8_t bytes[4] = { 0 };
+int mouse_speed = 3;
 
 
 #define pic1_command 0x20
@@ -36,8 +37,8 @@ void RemapPIC();
 struct IDTElement {
     unsigned short lower;
     unsigned short selector;
-    unsigned short zero;
-    unsigned short flags;
+    unsigned char zero;
+    unsigned char flags;
     unsigned short higher;
 };
 
@@ -223,16 +224,16 @@ void HandleMousePacket(){
     middle_clicked = status & middle_click;
 
     if(change_x > 0){
-        x += 5;
+        x += 2;
     }
     else if(change_x < 0){
-        x -= 5;
+        x -= 2;
     }
     if(change_y > 0){
-        y -= 5;
+        y -= 2;
     } 
     else if(change_y < 0){
-        y += 5;
+        y += 2;
     }
 }
 
