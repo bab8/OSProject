@@ -340,7 +340,6 @@ unsigned char ProcessScancode(int scancode) {
     else if (scancode == 0x0E)
         backspace_pressed = TRUE;
         
-        
     else if (scancode == 0x0F)
         return '\t';
         
@@ -424,10 +423,11 @@ unsigned char ProcessScancode(int scancode) {
         
         
     // ctrl pressed
-    else if (scancode == 0x1D)
+    else if (scancode == 0x1D){
         ctrl_pressed = TRUE;
-        
-        
+        Scancode = -1;
+    }
+          
     else if (scancode == 0x1E)
         if (shift_pressed == TRUE || caps_pressed == TRUE)
             return 'A';
@@ -501,9 +501,10 @@ unsigned char ProcessScancode(int scancode) {
             return '`';
         
     // shift pressed
-    else if (scancode == 0x2A)
+    else if (scancode == 0x2A){
         shift_pressed = TRUE;
-        
+        Scancode = -1;
+    }
         
     else if (scancode == 0x2B)
         if (shift_pressed == TRUE)
@@ -572,34 +573,43 @@ unsigned char ProcessScancode(int scancode) {
             return '/';
 
     // shift pressed    
-    else if (scancode == 0x36)
+    else if (scancode == 0x36){
         shift_pressed = TRUE;
-        
-
+        Scancode = -1;
+    }
+       
     // alt pressed
-    else if (scancode == 0x38)
+    else if (scancode == 0x38){
         alt_pressed = TRUE;
-        
+        Scancode = -1;
+    }
         
     else if (scancode == 0x39)
         return ' ';
     
     // Caps pressed
-    else if (scancode == 0x3A)
+    else if (scancode == 0x3A){
         if (caps_pressed == TRUE)
             caps_pressed = FALSE;
         else if (caps_pressed == FALSE)
             caps_pressed = TRUE;
+
+        Scancode = -1;
+    }
+        
+    // shift released
+    if (scancode == 0xAA){
+        shift_pressed = FALSE;
+        Scancode = -1;
+    }
         
 
     // shift released
-    if (scancode == 0xAA)
+    if (scancode == 0xB6){
         shift_pressed = FALSE;
+        Scancode = -1;
+    }
         
-
-    // shift released
-    if (scancode == 0xB6)
-        shift_pressed = FALSE;
 
     return '\0';
 }

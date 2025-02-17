@@ -7,50 +7,54 @@ int TaskLength = 0;
 struct Task {
     // 0 to 5, 0 higher priority
     int priority;
-    //determines type of task
-    int type;
+    //id will determine what signature to use
+    int taskId;
     //hold state of task
-    char param1[10000];
-    int param2;
+    char ca1[100];
+    int i1;
 
     //function pointers
-    int (*function_void)(void);
-    int (*function_string_buffer)(char*, int*);
+    int (*function)(int);
 };
 
 struct Task tasks[256];
+//array for extra params of type int for tasks
+int iparams[100] = {10};
 
 void ProcessTasks(){
     int priority = 0;
 
     while(priority <= 5){
         for(int i = 0; i < TaskLength; i++){
-            if(tasks[i].priority == priority){
+            /*if(tasks[i].priority == priority){
                 if(tasks[i].type == task_type_void){
                     tasks[i].function_void();
                 }
                 else if(tasks[i].type == task_type_string_buffer){
                     tasks[i].function_string_buffer(tasks[i].param1, &tasks[i].param2);
                 }
-            }
+            }*/
+           tasks[i].function(tasks[i].taskId);
         }
         priority++;
     }
 }
 
-int ClearScreenTask(){
+int ClearScreenTask(int taskId){
     ClearScreen(90,90,90);
     
     return 0;
 }
 
-int DrawMouseTask(){
+int DrawMouseTask(int taskId){
     DrawMouse(x,y,200,0,200);
     
     return 0;
 }
 
-int HandleKeyboardTask(char* character_buffer, int* character_buffer_length){
+int HandleKeyboardTask(int taskId){
+    char* character_buffer = tasks[taskId].ca1; 
+    int* character_buffer_length = &tasks[taskId].i1;
     char character = ProcessScancode(Scancode);
 
     if(backspace_pressed == TRUE){
