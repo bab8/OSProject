@@ -20,27 +20,22 @@ int start(){
    InitialiseMouse();
    InitialiseIDT();
    
+   tasks[TaskLength].priority = 0;
+   tasks[TaskLength].function = &ClearScreenTask;
+   TaskLength++;
+
+   tasks[TaskLength].priority = 0;
+   tasks[TaskLength].function = &DrawMouseTask;
+   TaskLength++;
+
+   tasks[TaskLength].priority = 0;
+   tasks[TaskLength].function = &HandleKeyboardTask;
+   TaskLength++;
+
+
    while(1){
-    char character = ProcessScancode(Scancode);
-
-    if(backspace_pressed == TRUE){
-      character_buffer[character_buffer_length - 1] = '\0';
-      character_buffer_length--;
-      backspace_pressed = FALSE;
-      Scancode = -1;
-    }
-    else if(character != '\0'){
-      character_buffer[character_buffer_length] = character;
-      character_buffer[character_buffer_length + 1] = '\0';
-      character_buffer_length++;
-      Scancode = -1;
-    }
-
-    ClearScreen(90,90,90);
-    DrawString(getArialCharacter, font_arial_width, font_arial_height, character_buffer_ptr, 100,100,0,0,0);
-
-    //DrawRect(x,y,10,10,0,0,0);
-    DrawMouse(x,y,200,0,200);
+    //DrawRect(x,y,10,10,0,0,0); 
+    ProcessTasks();
 
     Flush();
    }
