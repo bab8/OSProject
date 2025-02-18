@@ -3,8 +3,8 @@
 int start(){
    VBEInfoBlock* VBE = (VBEInfoBlock*) VBEInfoAddress;
 
-   x = VBE->x_resolution / 2;
-   y = VBE->y_resolution / 2;
+   mx = VBE->x_resolution / 2;
+   my = VBE->y_resolution / 2;
 
    //string literals cannot be more than 61 chars
    char str1[] = "Welcome to Sapphire OS! \n\nText rendered by custom library.";
@@ -25,11 +25,20 @@ int start(){
    TaskLength++;
 
    tasks[TaskLength].priority = 0;
-   tasks[TaskLength].function = &DrawMouseTask;
+   tasks[TaskLength].taskId = TaskLength;
+   tasks[TaskLength].function = &TestGraphicalElementsTask;
+   iparams[TaskLength * task_params_length + 0] = 10;
+   iparams[TaskLength * task_params_length + 1] = 10;
+   iparams[TaskLength * task_params_length + 2] = 300;
+   iparams[TaskLength * task_params_length + 3] = 300;
    TaskLength++;
 
    tasks[TaskLength].priority = 0;
    tasks[TaskLength].function = &HandleKeyboardTask;
+   TaskLength++;
+
+   tasks[TaskLength].priority = 0;
+   tasks[TaskLength].function = &DrawMouseTask;
    TaskLength++;
 
 
