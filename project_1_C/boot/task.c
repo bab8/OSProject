@@ -84,7 +84,7 @@ void CloseTask(int taskId){
 }
 
 int ClearScreenTask(int taskId){
-    ClearScreen(90,90,90);
+    ClearScreen(90,90,120);
     
     return 0;
 }
@@ -119,7 +119,7 @@ int HandleKeyboardTask(int taskId){
     return 0;
 }
 
-int TestGraphicalElementsTask(int taskId){
+int ShellTask(int taskId){
     int* r = &iparams[taskId * task_params_length + 4];
     int* g = &iparams[taskId * task_params_length + 5];
     int* b = &iparams[taskId * task_params_length + 6];
@@ -162,4 +162,90 @@ int TestGraphicalElementsTask(int taskId){
     }
 
     return 0;
+}
+
+int BallTask(int taskId){
+    int* r = &iparams[taskId * task_params_length + 4];
+    int* g = &iparams[taskId * task_params_length + 5];
+    int* b = &iparams[taskId * task_params_length + 6];
+
+    int closeClicked = DrawWindow(&iparams[taskId * task_params_length + 0], 
+            &iparams[taskId * task_params_length + 1],
+            &iparams[taskId * task_params_length + 2],
+            &iparams[taskId * task_params_length + 3],
+            0,
+            0,
+            0,
+            &iparams[taskId * task_params_length + 9],
+            taskId
+        );
+
+    if(closeClicked == TRUE){
+        CloseTask(taskId);
+    }
+
+    int x = iparams[taskId * task_params_length + 0];
+    int y = iparams[taskId * task_params_length + 1];
+    int width = iparams[taskId * task_params_length + 2];
+    int height = iparams[taskId * task_params_length + 3];
+
+    //delta x, delta y
+    iparams[taskId * task_params_length + 5] += iparams[taskId * task_params_length + 7];
+    iparams[taskId * task_params_length + 6] += iparams[taskId * task_params_length + 8];
+    
+    //x direction change
+    if(iparams[taskId * task_params_length + 5] + 10 > iparams[taskId * task_params_length + 2] ||
+       iparams[taskId * task_params_length + 5] - 10 < 0){
+            iparams[taskId * task_params_length + 7] = -iparams[taskId * task_params_length + 7];
+    }
+
+    //y direction change
+    if(iparams[taskId * task_params_length + 6] + 10 > iparams[taskId * task_params_length + 3] ||
+        iparams[taskId * task_params_length + 6] - 10 < 20){
+             iparams[taskId * task_params_length + 8] = -iparams[taskId * task_params_length + 8];
+     }
+
+    DrawCircle(x + iparams[taskId * task_params_length + 5], y + iparams[taskId * task_params_length + 6], 10, 64, 120, 64);
+
+}
+
+int TaskbarTask(int taskId){
+    VBEInfoBlock* VBE = (VBEInfoBlock*) VBEInfoAddress;
+    DrawRect(0,0, VBE->x_resolution, 40, 90, 90, 90);
+
+    int i = iparams[taskId * task_params_length + 4];
+
+    char text[] = "Shell\0";
+    if(DrawButton(0,0,50,40,0,10,120,text, 255,255,255,taskId) == TRUE){
+        tasks[TaskLength].priority = 0;
+        tasks[TaskLength].taskId = TaskLength;
+        tasks[TaskLength].function = &ShellTask;
+        iparams[TaskLength * task_params_length + 0] = i * 40;
+        iparams[TaskLength * task_params_length + 1] = i * 40;
+        iparams[TaskLength * task_params_length + 2] = 300;
+        iparams[TaskLength * task_params_length + 3] = 300;
+        iparams[TaskLength * task_params_length + 4] = 0;
+        iparams[TaskLength * task_params_length + 5] = 0;
+        iparams[TaskLength * task_params_length + 6] = 0;
+        TaskLength++;
+        iparams[taskId * task_params_length + 4]++;
+    }
+
+    char text2[] = "Ball\0";
+    if(DrawButton(50,0,50,40,10,120,0,text2, 255,255,255,taskId) == TRUE){
+        tasks[TaskLength].priority = 0;
+        tasks[TaskLength].taskId = TaskLength;
+        tasks[TaskLength].function = &BallTask;
+        iparams[TaskLength * task_params_length + 0] = i * 40;
+        iparams[TaskLength * task_params_length + 1] = i * 40;
+        iparams[TaskLength * task_params_length + 2] = 300;
+        iparams[TaskLength * task_params_length + 3] = 300;
+        iparams[TaskLength * task_params_length + 4] = 0;
+        iparams[TaskLength * task_params_length + 5] = 20;
+        iparams[TaskLength * task_params_length + 6] = 30;
+        iparams[TaskLength * task_params_length + 7] = 5;
+        iparams[TaskLength * task_params_length + 8] = 5;
+        TaskLength++;
+        iparams[taskId * task_params_length + 4]++;
+    }
 }
