@@ -24,20 +24,33 @@ int start(){
    tasks[TaskLength].function = &ClearScreenTask;
    TaskLength++;
 
-   tasks[TaskLength].priority = 0;
+   /*tasks[TaskLength].priority = 0;
    tasks[TaskLength].taskId = TaskLength;
    tasks[TaskLength].function = &TestGraphicalElementsTask;
    iparams[TaskLength * task_params_length + 0] = 10;
    iparams[TaskLength * task_params_length + 1] = 10;
    iparams[TaskLength * task_params_length + 2] = 300;
    iparams[TaskLength * task_params_length + 3] = 300;
-   TaskLength++;
+   iparams[TaskLength * task_params_length + 4] = 0;
+   iparams[TaskLength * task_params_length + 5] = 0;
+   iparams[TaskLength * task_params_length + 6] = 0;
+   TaskLength++;*/
 
    tasks[TaskLength].priority = 0;
+   tasks[TaskLength].function = &TaskbarTask;
+   tasks[TaskLength].taskId = TaskLength;
+   iparams[TaskLength * task_params_length + 0] = 0;
+   iparams[TaskLength * task_params_length + 1] = 0;
+   iparams[TaskLength * task_params_length + 2] = VBE->x_resolution;
+   iparams[TaskLength * task_params_length + 3] = 40;
+   iparams[TaskLength * task_params_length + 4] = 1;
+   TaskLength++;
+
+   /*tasks[TaskLength].priority = 0;
    tasks[TaskLength].function = &HandleKeyboardTask;
-   TaskLength++;
+   TaskLength++;*/
 
-   tasks[TaskLength].priority = 0;
+   tasks[TaskLength].priority = 5;
    tasks[TaskLength].function = &DrawMouseTask;
    TaskLength++;
 
