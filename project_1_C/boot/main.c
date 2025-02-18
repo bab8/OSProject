@@ -31,6 +31,9 @@ int start(){
    iparams[TaskLength * task_params_length + 1] = 10;
    iparams[TaskLength * task_params_length + 2] = 300;
    iparams[TaskLength * task_params_length + 3] = 300;
+   iparams[TaskLength * task_params_length + 4] = 0;
+   iparams[TaskLength * task_params_length + 5] = 0;
+   iparams[TaskLength * task_params_length + 6] = 0;
    TaskLength++;
 
    tasks[TaskLength].priority = 0;

@@ -85,36 +85,37 @@ int HandleKeyboardTask(int taskId){
 }
 
 int TestGraphicalElementsTask(int taskId){
-    if(left_clicked == FALSE){
-        iparams[taskId * task_params_length + 9] = FALSE;
-    }
+    int* r = &iparams[taskId * task_params_length + 4];
+    int* g = &iparams[taskId * task_params_length + 5];
+    int* b = &iparams[taskId * task_params_length + 6];
 
-    //iparams 0 - x
-    //iparams 1 - y
-    //iparams 2 - width
-    //iparams 3 - height
-    //iparms 9 - mouse click held
-    if(iparams[taskId * task_params_length + 9] == TRUE || 
-       (left_clicked == TRUE && mx > iparams[taskId * task_params_length + 0] &&
-        mx < iparams[taskId * task_params_length + 0] + iparams[taskId * task_params_length + 2] - 30 &&
-        my > iparams[taskId * task_params_length + 1] &&
-        my < iparams[taskId * task_params_length + 1] + 20)){
-            left_clicked = FALSE;
-
-            iparams[taskId * task_params_length + 9] = TRUE;
-            iparams[taskId * task_params_length + 0] = mx - (iparams[taskId * task_params_length + 2] / 2);
-            iparams[taskId * task_params_length + 1] = my - 10;
-        }
-
-    if(DrawWindow(iparams[taskId * task_params_length + 0], 
-            iparams[taskId * task_params_length + 1],
-            iparams[taskId * task_params_length + 2],
-            iparams[taskId * task_params_length + 3],
-            0,
-            0,
-            0
+    if(DrawWindow(&iparams[taskId * task_params_length + 0], 
+            &iparams[taskId * task_params_length + 1],
+            &iparams[taskId * task_params_length + 2],
+            &iparams[taskId * task_params_length + 3],
+            *r,
+            *g,
+            *b,
+            &iparams[taskId * task_params_length + 9]
         ) == 1){
             CloseTask(taskId);
         }
+
+        char text[] = "Dark\0";
+        char text1[] = "Light\0";
+
+        if(DrawButton(iparams[taskId * task_params_length + 0] + 20, iparams[taskId * task_params_length + 1] + 20, 50, 20, 0, 120, 0,
+            text, 100, 100, 100) == TRUE){
+                *r = 16;
+                *g = 16;
+                *b = 16;
+        }
+        if(DrawButton(iparams[taskId * task_params_length + 0] + 100, iparams[taskId * task_params_length + 1] + 20, 50, 20, 0, 120, 0,
+            text1, 100, 100, 100) == TRUE){
+                *r = 200;
+                *g = 200;
+                *b = 200;
+        }
+
     return 0;
 }
