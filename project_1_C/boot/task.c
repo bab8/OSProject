@@ -11,7 +11,7 @@ struct Task {
     //id will determine what signature to use
     int taskId;
     //hold state of task
-    char ca1[100];
+    char ca1[1000];
     int i1;
 
     //function pointers
@@ -113,9 +113,17 @@ int HandleKeyboardTask(int taskId){
       Scancode = -1;
     }
 
-    
-    DrawString(getArialCharacter, font_arial_width, font_arial_height, character_buffer, 100,100,16,16,16);
-    
+    //DrawString(getArialCharacter, font_arial_width, font_arial_height, character_buffer, 100,100,16,16,16);
+    //x = iparams[taskId * task_params_length + 0]
+    //y = iparams[taskId * task_params_length + 1]
+    //width = &iparams[taskId * task_params_length + 2]
+    //height = &iparams[taskId * task_params_length + 3]
+    int width = iparams[taskId * task_params_length + 2];
+    int x = iparams[taskId * task_params_length + 0];
+
+    DrawString(getArialCharacter, font_arial_width, font_arial_height, character_buffer, 
+                iparams[taskId * task_params_length + 0], iparams[taskId * task_params_length + 1] + 40,0,120,0, x + width);
+
     return 0;
 }
 
@@ -160,6 +168,8 @@ int ShellTask(int taskId){
             *g = 200;
             *b = 200;
     }
+
+    HandleKeyboardTask(taskId);
 
     return 0;
 }

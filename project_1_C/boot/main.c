@@ -46,9 +46,9 @@ int start(){
    iparams[TaskLength * task_params_length + 4] = 1;
    TaskLength++;
 
-   tasks[TaskLength].priority = 0;
+   /*tasks[TaskLength].priority = 0;
    tasks[TaskLength].function = &HandleKeyboardTask;
-   TaskLength++;
+   TaskLength++;*/
 
    tasks[TaskLength].priority = 5;
    tasks[TaskLength].function = &DrawMouseTask;

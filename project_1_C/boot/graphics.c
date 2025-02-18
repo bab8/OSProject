@@ -50,12 +50,16 @@ void DrawCharacter(int (*f)(int,int), int font_width, int font_height, char char
     }
 }
 
-void DrawString(int (*f)(int,int), int font_width, int font_height, char* string, int x, int y, int r, int g, int b){
+void DrawString(int (*f)(int,int), int font_width, int font_height, char* string, int x, int y, int r, int g, int b, int width){
     //offsets
     int i = 0;
     int j = 0;
 
     for(int k = 0; *(string + k) != 0; k++){
+        if(x + i > width){
+            i = 0;
+            j += font_height;
+        }
         //draw current char
         if(*(string + k) != '\n'){
             DrawCharacter(f, font_width, font_height, *(string + k), x + i, y + j, r, g, b);
