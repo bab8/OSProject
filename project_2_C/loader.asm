@@ -27,13 +27,58 @@ LoadKernel:
     int 0x13
     jc ReadError; carry flag will be set if sectors cannot be read
 
-    mov ah, 0x13; holds function code
-    mov al, 1; specifies mode
-    mov bx, 0xa; represents page number, 0xa means green color, holds info about character attributes
-    xor dx,dx; dh is rows, dl is columns, so we set dx to zero to print at 0 position on screen
-    mov bp, Message; copies address of message
-    mov cx, MessageLength;specifies number of characters to print
-    int 0x10; interrupt for print function
+GetMemInfoStart:;use to get info on memory address block to see what memory is avaible to be used
+    mov eax,0xe820
+    mov edx,0x534d4150; ascii code for smap
+    mov ecx,20; length of memory block
+    mov edi,0x9000; save the memory address
+    xor ebx,ebx
+    int 0x15
+    jc NotSupport; service 0xe280 not available
+
+GetMemInfo:
+    add edi,20; move to next memory address
+    mov eax,0xe820
+    mov edx,0x534d4150
+    mov ecx,20
+    int 0x15
+    jc GetMemDone; carry flag means end of memory blocks has been reached
+
+    test ebx,ebx
+    jnz GetMemInfo; repeat function
+
+GetMemDone:
+TestA20:; test is a20line is enabled, deteremines is 20th bit is read or ignored
+    mov ax, 0xffff
+    mov es,ax
+    mov word[ds:0x7c00], 0xa200
+    cmp word[es:0x7c10], 0xa200; 0xffff:0x7c00 = 0xfff * 16 + 0x7c10 = 0x107c00
+    jne SetA20LineDone
+    mov word[0x7c00], 0xb200; second test
+    cmp word[es:0x7c10],0xb200
+    je End
+
+SetA20LineDone:
+    xor ax,ax
+    mov es,ax
+
+SetVideoMode:
+    mov ax,3; 3 for text mode, screen is 80x25(80 char each line, 25 lines), first position is b8000 and increments by 2 for each position
+    int 0x10; each screen position is two bytes, first byte is for ascii code, second byte is for attributes, lower half is foreground color and teh other half is for background color           
+    mov si,Message ; 0 - Black, 1 - Blue, 2 - Green, 3 - Cyan, 4 - Red, 5 - Magenta, 6 - Brown, 7 - Light Gray, 8 - Dark gray, 9 - Light Blue, A - Light Green, B - Light Cyan, C - Light Red, D - Light Magenta, E - Yellow
+    mov ax,0xb800
+    mov es,ax
+    xor di,di
+    mov cx, MessageLength
+
+PrintMessage:
+    mov al,[si]
+    mov [es:di],al; [es:di] is 0xb8000
+    mov byte[es:di + 1], 0xa; make char green
+
+    add di,2; char takes up 2 bytes
+    add si,1; char stored takes up 1 byte
+    loop PrintMessage; loops based on cx
 
 ReadError:
 NotSupport:
@@ -42,6 +87,6 @@ End:
     jmp End
 
 DriveId:       db 0
-Message:       db "Kernel Loaded"
+Message:       db "Text Mode is set"
 MessageLength: equ $-Message; $ is current asm position so $ - Message gives number of char to print for message by using equ instruction
 ReadPacket: times 16 db 0; 16 byte structure (0[first word] size, 2 number of sectors, 4 offset, 6 segement, 8 address low, address high)
