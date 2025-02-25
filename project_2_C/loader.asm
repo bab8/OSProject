@@ -64,21 +64,17 @@ SetA20LineDone:
 
 SetVideoMode:
     mov ax,3; 3 for text mode, screen is 80x25(80 char each line, 25 lines), first position is b8000 and increments by 2 for each position
-    int 0x10; each screen position is two bytes, first byte is for ascii code, second byte is for attributes, lower half is foreground color and teh other half is for background color           
-    mov si,Message ; 0 - Black, 1 - Blue, 2 - Green, 3 - Cyan, 4 - Red, 5 - Magenta, 6 - Brown, 7 - Light Gray, 8 - Dark gray, 9 - Light Blue, A - Light Green, B - Light Cyan, C - Light Red, D - Light Magenta, E - Yellow
-    mov ax,0xb800
-    mov es,ax
-    xor di,di
-    mov cx, MessageLength
+    int 0x10; each screen position is two bytes, first byte is for ascii code, second byte is for attributes, lower half is foreground color and the other half is for background color           
 
-PrintMessage:
-    mov al,[si]
-    mov [es:di],al; [es:di] is 0xb8000
-    mov byte[es:di + 1], 0xa; make char green
+    cli; clear interrupt flag, disables interrupts(except nonmaskable) so that we can switch to modes
+    lgdt [Gdt32Ptr]; load gdt register
+    lidt [Idt32Ptr]; load Idt register, will be 0 since idt is not being set in 32-bit mode for this project
+    
+    mov eax,cr0
+    or eax,1
+    mov cr0,eax; cr0 is cpu control register used to enable rpotected mode, so we set it to 1 to enable
 
-    add di,2; char takes up 2 bytes
-    add si,1; char stored takes up 1 byte
-    loop PrintMessage; loops based on cx
+    jmp 8:PMEntry; init cs for PE use 8 since code is second entry and thus 8 bytes after beginning of gdt
 
 ReadError:
 NotSupport:
@@ -86,7 +82,51 @@ End:
     hlt
     jmp End
 
+[BITS 32]
+PMEntry:
+    mov ax,0x10; data is third entry so we use 16 for index
+    mov ds,ax
+    mov es,ax
+    mov ss,ax;init data segment registers with gdt data 
+    mov esp,0x7c00; set stack ptr
+
+    mov byte[0xb8000],'P'; 0xb8000 is first byte on screen in PE
+    mov byte[0xb8001], 0xa; color will be light green
+
+PEnd:
+    hlt
+    jmp PEnd
+
 DriveId:       db 0
-Message:       db "Text Mode is set"
-MessageLength: equ $-Message; $ is current asm position so $ - Message gives number of char to print for message by using equ instruction
 ReadPacket: times 16 db 0; 16 byte structure (0[first word] size, 2 number of sectors, 4 offset, 6 segement, 8 address low, address high)
+
+Gdt32:
+    dq 0; first entry empty dp is quad word allocates 8 bytes
+Code32:
+    dw 0xffff; first two bytes defines segement size, we want code to be max size
+    dw 0; lower 24 bits of base address occupy next three bytes
+    db 0; code segment starts from 0
+    db 0x9a; 0x9a = 10011010b 1-00-1-1010 last bit is for present which needs to be there so cpu wont throw exception when accdesssing segement, 
+           ; 00 is dpl used to assign privilage level for segment, 1 is for flagging whether this is code or data descriptor, 
+           ; 1010 is for type which determines if code is conforming or non-conforming which determines if cpl is changed when transferred to higher privilege conforming code segment, 1010 is non-conforming
+    db 0xcf; 0xcf = 1101111b 1-1-0-0-1111 G-D-0-A-LIMIT, is used for segment size and attributtes,
+           ;1 for G for granularity size of field will be scaled by 4kb, 
+           ;1 for D which is default operand size, we set so it is 32 bit otherwise defaults to 16 bit, 
+           ;0 ignored bit, 0 for A determines if segment can be used by system software, 1111 for LIMIT for max size limit for segment
+    db 0   ;last byte is upper8 bits of base address
+Data32:
+    dw 0xffff; same structure as code segement
+    dw 0; 
+    db 0; 
+    db 0x92; changed type field to 0010 to mark as writeable segment
+    db 0xcf; 
+    db 0  
+
+Gdt32Len: equ $-Gdt32
+
+Gdt32Ptr: dw Gdt32Len-1
+          dd Gdt32
+
+Idt32Ptr: dw 0
+          dd 0
+
