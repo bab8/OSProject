@@ -74,7 +74,7 @@ SetVideoMode:
     or eax,1
     mov cr0,eax; cr0 is cpu control register used to enable rpotected mode, so we set it to 1 to enable
 
-    jmp 8:PMEntry; init cs for PE use 8 since code is second entry and thus 8 bytes after beginning of gdt
+    jmp 8:PMEntry; init cs for PE use 8 since code is second entry and thus 8 bytes after beginning of gdt, have to use jmp instead of mov for cs register
 
 ReadError:
 NotSupport:
@@ -90,12 +90,49 @@ PMEntry:
     mov ss,ax;init data segment registers with gdt data 
     mov esp,0x7c00; set stack ptr
 
-    mov byte[0xb8000],'P'; 0xb8000 is first byte on screen in PE
-    mov byte[0xb8001], 0xa; color will be light green
+    cld;            the addresses 0x80000 - 0x90000 may be used for BIOS data instead we can use 0x70000 to 0x80000      
+    mov edi,0x80000; this code uses a free memory area to initialize the paging structure, translates virtual address to physical address
+    xor eax,eax;
+    mov ecx,0x10000/4;
+    rep stosd;
+
+    mov dword[0x80000],0x81007
+    mov dword[0x81000],10000111b
+
+    lgdt[Gdt64Ptr]
+    
+    mov eax,cr4
+    or eax,(1<<5); bit 5 in cr4 needs to be set for Physical address extension whihc is necessary for 64-bit mode
+    mov cr4,eax
+
+    mov eax,0x80000; cr3 needs address of paging structure for 64-bit mode
+    mov cr3,eax; from here addresses need to be mapped to physical before being used, but any addresses loaded to cr3 will still require physcial address
+
+    mov ecx,0xc0000080
+    rdmsr; read msr
+    or eax,(1<<8); registers 8th bit needs to be set to enable long mode
+    wrmsr; write msr
+
+    mov eax,cr0
+    or eax,(1<<31)
+    mov cr0,eax;enabling paging, long mode enabled
+
+    jmp 8:LMEntry; code is at first index or at 8 bytes
 
 PEnd:
     hlt
     jmp PEnd
+
+[BITS 64];placed after PEnd
+LMEntry:
+    mov rsp,0x7c00
+
+    mov byte[0xb8000], 'L'
+    mov byte[0xb8001], 0xa; text light green
+
+LEnd:
+    hlt
+    jmp LEnd
 
 DriveId:       db 0
 ReadPacket: times 16 db 0; 16 byte structure (0[first word] size, 2 number of sectors, 4 offset, 6 segement, 8 address low, address high)
@@ -106,7 +143,7 @@ Code32:
     dw 0xffff; first two bytes defines segement size, we want code to be max size
     dw 0; lower 24 bits of base address occupy next three bytes
     db 0; code segment starts from 0
-    db 0x9a; 0x9a = 10011010b 1-00-1-1010 last bit is for present which needs to be there so cpu wont throw exception when accdesssing segement, 
+    db 0x9a; 0x9a = 10011010b 1-00-1-1010 last bit is for present which needs to be there so cpu wont throw exception when accesssing segement, 
            ; 00 is dpl used to assign privilage level for segment, 1 is for flagging whether this is code or data descriptor, 
            ; 1010 is for type which determines if code is conforming or non-conforming which determines if cpl is changed when transferred to higher privilege conforming code segment, 1010 is non-conforming
     db 0xcf; 0xcf = 1101111b 1-1-0-0-1111 G-D-0-A-LIMIT, is used for segment size and attributtes,
@@ -129,4 +166,14 @@ Gdt32Ptr: dw Gdt32Len-1
 
 Idt32Ptr: dw 0
           dd 0
+
+Gdt64:
+    dq 0; first entry empty
+    dq 0x0020980000000000; second entry code has attribute D=0 if long bit is set-L(long bit)=1 so we are in 64-bit mode not compatability mode-P(present bit)=1(else exception)-DPL(set privilege level)=0-1-1(descriptor is code segment)-C(conforming bit)=0
+                         ;third entry is data but in 64-bit mode switching privilege level is only use for data segement so there is no need to define it in the loader file for this project
+Gdt64Len: equ $-Gdt64
+
+Gdt64Ptr: dw Gdt64Len-1
+          dd Gdt64
+    
 
