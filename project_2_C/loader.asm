@@ -125,11 +125,17 @@ PEnd:
 
 [BITS 64];placed after PEnd
 LMEntry:
-    mov rsp,0x7c00
+    mov rsp,0x7c00; set stack ptr
 
-    mov byte[0xb8000], 'L'
-    mov byte[0xb8001], 0xa; text light green
+    cld;clear direction flag(allows processing of low memory address to high memory address)
+    mov rdi,0x200000; destination address stored in rdi, 0x200000 is where we want kernel
+    mov rsi,0x10000; source address stored in rsi, current location of kernel is 0x10000
+    mov rcx,51200/8; rcx acts as counter,512000 is equal to 100 sectors, divide by 8 because of quad word
+    rep movsq; repeat mov quad word rcx times
 
+
+    jmp 0x200000; transfers exectuion to kernel
+    
 LEnd:
     hlt
     jmp LEnd
