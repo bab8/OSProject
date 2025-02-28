@@ -132,11 +132,11 @@ InitPIC:        ; bits: 765-4(init command followed by another 3)-3-2-1-0(use la
     retf; set cs register with code
 
 KerenelEntry:
-    xor ax,ax
-    mov ss,ax
+    ;xor ax,ax
+    ;mov ss,ax
     mov rsp,0x200000; point stack to kernel
     call KMain
-    sti; enable interrupt
+    ;sti; enable interrupt
 
 End:        
     hlt
