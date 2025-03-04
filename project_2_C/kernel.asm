@@ -39,7 +39,7 @@ Gdt64Ptr: dw Gdt64Len-1; limit loaded with double word
 
 Tss:;task state segment
     dd 0; first bytes reserved
-    dq 0x150000; rsp0
+    dq 0xffff800000190000; rsp0
     times 88 db 0; io permission bitmap(not use so we assign it the size of TSS)
     dd TssLen
 
@@ -65,19 +65,20 @@ start:
     ;mov rdi,Idt+32*16+7*16;dealing with IRQ7 of parent chip, so vector number is 32+7 and each entry is 16 bytes
     ;mov rax,SIRQ
     ;call SetHandler
-    
-    lgdt[Gdt64Ptr]
+    mov rax,Gdt64Ptr; since kernel is now addressed by virtual address we need a to load gdt from, a 64 bit register instead of loading address directly, this is because teh virtual address of kernel is now way higher
+    lgdt[rax]
     ;lidt[IdtPtr]
 
 SetTss:
     mov rax,Tss
-    mov [TssDesc+2],ax;lower third bytes contain first part of address
+    mov rdi,TssDesc
+    mov [rdi+2],ax;lower third bytes contain first part of address
     shr rax,16; fifth bytes contain next part of address
-    mov [TssDesc+4],al
+    mov [rdi+4],al
     shr rax,8
-    mov [TssDesc+7],al
+    mov [rdi+7],al
     shr rax,8; eax now holds the rest of the address
-    mov [TssDesc+8],eax; Tss selector now set
+    mov [rdi+8],eax; Tss selector now set
 
     mov ax,0x20; 0x20 is is the selector we want, since it is the 5 entry in the gdt
     ltr ax;load task register, Tss setup
@@ -126,15 +127,16 @@ InitPIC:        ; bits: 765-4(init command followed by another 3)-3-2-1-0(use la
     ;push UserEntry
     ;iretq; will return to user entry and load cs and ss selector as set here
     
+    mov rax, KernelEntry
     push 8; since code is first entry
-    push KerenelEntry; save address of location we want ot enter
+    push rax; save address of location we want to enter
     db 0x48; change operand size to 64-bit
     retf; set cs register with code
 
-KerenelEntry:
+KernelEntry:
     ;xor ax,ax
     ;mov ss,ax
-    mov rsp,0x200000; point stack to kernel
+    mov rsp,0xffff800000200000; point stack to kernel
     call KMain
     ;sti; enable interrupt
 

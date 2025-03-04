@@ -23,6 +23,7 @@ global vector39
 global eoi
 global read_isr
 global load_idt
+global load_cr3
 
 Trap:
     push rax
@@ -173,4 +174,9 @@ read_isr:
 
 load_idt:
     lidt [rdi]; load idt with passed parameter
+    ret
+
+load_cr3:
+    mov rax,rdi
+    mov cr3,rax
     ret
