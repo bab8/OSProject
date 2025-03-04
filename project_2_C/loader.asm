@@ -31,21 +31,24 @@ GetMemInfoStart:;use to get info on memory address block to see what memory is a
     mov eax,0xe820
     mov edx,0x534d4150; ascii code for smap
     mov ecx,20; length of memory block
-    mov edi,0x9000; save the memory address
+    mov dword[0x9000],0;struture
+    mov edi,0x9008; save the memory address
     xor ebx,ebx
     int 0x15
     jc NotSupport; service 0xe280 not available
 
 GetMemInfo:
     add edi,20; move to next memory address
+    inc dword[0x9000]; inc count
+    test ebx,ebx
+    jz GetMemDone; loop while not 0
+
     mov eax,0xe820
     mov edx,0x534d4150
     mov ecx,20
     int 0x15
-    jc GetMemDone; carry flag means end of memory blocks has been reached
+    jnc GetMemInfo; carry flag means end of memory blocks has been reached
 
-    test ebx,ebx
-    jnz GetMemInfo; repeat function
 
 GetMemDone:
 TestA20:; test is a20line is enabled, deteremines is 20th bit is read or ignored
@@ -91,13 +94,18 @@ PMEntry:
     mov esp,0x7c00; set stack ptr
 
     cld;            the addresses 0x80000 - 0x90000 may be used for BIOS data instead we can use 0x70000 to 0x80000      
-    mov edi,0x80000; this code uses a free memory area to initialize the paging structure, translates virtual address to physical address
+    mov edi,0x70000; this code uses a free memory area to initialize the paging structure, translates virtual address to physical address
     xor eax,eax;
     mov ecx,0x10000/4;
     rep stosd;
 
-    mov dword[0x80000],0x81007
-    mov dword[0x81000],10000111b
+    mov dword[0x70000],0x71003 ;readable, writeable, only accessable by kernel, indicated by first 3 bits or 3
+    mov dword[0x71000],10000011b; base address set to 0 indicated by bits 3 to 7, first 2 bits set to 1 to indicate same properties described in prev comment
+
+    mov eax,(0xffff800000000000>>39); retrieve 9 bit page map level 4 value located at bit 39 for kernel
+    and eax,0x1ff; zero all but the 9 bits
+    mov dword[0x70000+eax*8],0x72003; each entry is 8 bytes, accessing page table
+    mov dword[0x72000],10000011b; set 1gb page to physcial page of kernel location
 
     lgdt[Gdt64Ptr]
     
@@ -105,7 +113,7 @@ PMEntry:
     or eax,(1<<5); bit 5 in cr4 needs to be set for Physical address extension whihc is necessary for 64-bit mode
     mov cr4,eax
 
-    mov eax,0x80000; cr3 needs address of paging structure for 64-bit mode
+    mov eax,0x70000; cr3 needs address of paging structure for 64-bit mode
     mov cr3,eax; from here addresses need to be mapped to physical before being used, but any addresses loaded to cr3 will still require physcial address
 
     mov ecx,0xc0000080
@@ -133,8 +141,8 @@ LMEntry:
     mov rcx,51200/8; rcx acts as counter,512000 is equal to 100 sectors, divide by 8 because of quad word
     rep movsq; repeat mov quad word rcx times
 
-
-    jmp 0x200000; transfers exectuion to kernel
+    mov rax, 0xffff800000200000; virtual address of kernel
+    jmp rax; transfers exectuion to kernel
     
 LEnd:
     hlt
