@@ -6,4 +6,5 @@
 void KMain(void){
    init_idt();
    init_memory();
+   init_kvm();
 }

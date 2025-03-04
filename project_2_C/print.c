@@ -2,9 +2,10 @@
 #include "stdarg.h"
 #include "print.h"
 #include "lib.h"
+#include "memory.h"
 
 //struct to hold screen print position
-static struct ScreenBuffer screen_buffer = {(char*)0xb8000, 0, 0};
+static struct ScreenBuffer screen_buffer = {(char*)P2V(0xb8000), 0, 0};
 
 static int udecimal_to_string(char* buffer, int position, uint64_t digits){
     char digits_map[10] = "0123456789";
