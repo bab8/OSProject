@@ -46,7 +46,12 @@ void init_kvm(void);
 void switch_kvm(uint64_t map);
 void* kalloc(void);
 void kfree(uint64_t v);
-bool map_pagea(uint64_t map, uint64_t v, uint64_t e, uint64_t pa, uint32_t attribute);
+bool map_pages(uint64_t map, uint64_t v, uint64_t e, uint64_t pa, uint32_t attribute);
 void load_cr3(uint64_t map);
+void free_vm(uint64_t map);
+void free_pages(uint64_t map, uint64_t vstart, uint64_t vend);
+bool setup_uvm(uint64_t map, uint64_t start, int size);
+uint64_t setup_kvm(void);
+
 
 #endif

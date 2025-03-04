@@ -10,7 +10,6 @@ static void free_region(uint64_t v, uint64_t r);
 static struct FreeMemRegion free_mem_region[50]; //assure 50 blocks of free regions of memory
 static struct Page free_memory;
 static uint64_t memory_end;
-uint64_t page_map;
 extern char end; //provided by linker not defined here
 
 void init_memory(void){
@@ -58,7 +57,7 @@ static void free_region(uint64_t v, uint64_t e){
     //align page, compare with end, if in range call free function
     for(uint64_t start = PA_UP(v);start+PAGE_SIZE <= e; start += PAGE_SIZE){
         //check 1gb of base of kernel to see if page being initialized is beyond our 1gb of ram
-        if(v+PAGE_SIZE <= 0xffff800040000000){
+        if(start+PAGE_SIZE <= 0xffff800040000000){
             kfree(start);
         }
     }
@@ -183,18 +182,100 @@ void switch_vm(uint64_t map){
 }
 
 //remap kernel with 2mb pages
-static void setup_kvm(void){
-    page_map = (uint64_t)kalloc();
-    ASSERT(page_map != 0);
-
-    memset((void*)page_map, 0, PAGE_SIZE);
-    //pass page map, give start vaddr of KERNEL BASE, end vaddr of memory end, give physical adr of kernel, give attributes present and writable but not user
-    bool status = map_pages(page_map, KERNEL_BASE, memory_end, V2P(KERNEL_BASE), PTE_P|PTE_W);
-    ASSERT(status == true);
+uint64_t setup_kvm(void){
+    uint64_t page_map = (uint64_t)kalloc();
+    if(page_map != 0){
+        memset((void*)page_map, 0, PAGE_SIZE);
+        //pass page map, give start vaddr of KERNEL BASE, end vaddr of memory end, give physical adr of kernel, give attributes present and writable but not user
+        if(!map_pages(page_map, KERNEL_BASE, memory_end, V2P(KERNEL_BASE), PTE_P|PTE_W)){
+            free_vm(page_map);
+            page_map = 0;
+        }
+    }
+    return page_map;
 }
 
 void init_kvm(void){
-    setup_kvm();
+    uint64_t page_map = setup_kvm();
+    ASSERT(page_map != 0);
     switch_vm(page_map);
     printk("memory manager is now working");
+}
+
+bool setup_uvm(uint64_t map, uint64_t start, int size){
+    bool status = false;
+    void* page = kalloc();
+
+    if(page != NULL){
+        memset(page, 0 , PAGE_SIZE);
+        status = map_pages(map, 0x400000, 0x400000+PAGE_SIZE, V2P(page), PTE_P | PTE_W | PTE_U);
+        if(status == true){
+            memcpy(page, (void*)start, size);
+        } else{
+            kfree((uint64_t)page);
+            free_vm(map);
+        }
+    }
+
+    return status;
+}
+
+void free_pages(uint64_t map, uint64_t vstart, uint64_t vend){
+    unsigned int index;
+
+    ASSERT(vstart % PAGE_SIZE == 0);
+    ASSERT(vend % PAGE_SIZE == 0);
+
+    do{
+        PD pd = find_pdpt_entry(map,vstart,0,0);
+
+        if(pd != NULL){
+            index = (vstart >> 21) & 0x1FF;
+            if(pd[index] & PTE_P){
+                kfree(P2V(PTE_ADDR(pd[index])));
+                pd[index] = 0;
+            }
+        }
+
+        vstart += PAGE_SIZE;
+    }while(vstart+PAGE_SIZE <= vend);
+}
+
+static void free_pdt(uint64_t map){
+    PDPTR* map_entry = (PDPTR*)map;
+
+    for(int i = 0; i < 512; i++){
+        if((uint64_t)map_entry[i] & PTE_P){
+            PD* pdptr = (PD*)P2V(PDE_ADDR(map_entry[i]));
+
+            for(int j = 0; j < 512; j++){
+                if((uint64_t)pdptr[j] & PTE_P){
+                    kfree(P2V(PDE_ADDR(pdptr[j])));
+                    pdptr[j] = 0;
+                }
+            }
+        }   
+    }
+}
+
+static void free_pdpt(uint64_t map){
+    PDPTR* map_entry = (PDPTR*)map;
+
+    for(int i = 0; i < 512; i++){
+        if((uint64_t)map_entry[i] & PTE_P){
+            kfree(P2V(PDE_ADDR(map_entry[i])));
+            map_entry[i] = 0;
+        }
+    }
+}
+
+static void free_pml4t(uint64_t map){
+    kfree(map);
+}
+
+void free_vm(uint64_t map){ 
+    free_pages(map,0x400000,0x400000+PAGE_SIZE);
+    free_pdt(map);
+    free_pdpt(map);
+    free_pml4t(map);
 }
