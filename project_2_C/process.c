@@ -8,6 +8,7 @@
 extern struct TSS Tss;
 static struct Process process_table[NUM_PROC]; //define process_table with max number processess
 static int pid_num = 1; // used to allocate new process with process id
+static struct ProcessControl pc;
 
 static void set_tss(struct Process* proc){
     //assigns top of kernel stack to rsp0 in tss(jumps from ring3 to ring0)
@@ -27,7 +28,7 @@ static struct Process* find_unused_process(void){
     return process;
 }
 
-static void set_process_entry(struct Process* proc){
+static void set_process_entry(struct Process* proc, uint64_t addr){
     uint64_t stack_top;
 
     //set process state to intialized and give process an id
@@ -42,6 +43,11 @@ static void set_process_entry(struct Process* proc){
     memset((void*)proc->stack, 0 , PAGE_SIZE);
     stack_top = proc->stack + STACK_SIZE;
 
+    //init the context for the process so first switch returns to correct location
+    proc->context = stack_top - sizeof(struct TrapFrame) - 7*8;
+    //6*8, represents the amount of registers saved
+    *(uint64_t*)(proc->context + 6*8) = (uint64_t)TrapReturn;
+
     //init process trap frame, needed for jumping from ring3 to ring0 and returning
     //pts process tf to start of trapframe by utilizing stack_top
     proc->tf = (struct TrapFrame*)(stack_top - sizeof(struct TrapFrame));
@@ -54,18 +60,86 @@ static void set_process_entry(struct Process* proc){
     //set up process pages for kernel and user mode
     proc->page_map = setup_kvm();
     ASSERT(proc->page_map != 0);
-    ASSERT(setup_uvm(proc->page_map, (uint64_t)P2V(0x20000), 512*10));
+    ASSERT(setup_uvm(proc->page_map, P2V(addr), 512*10));
+    proc->state = PROC_READY;
+}
+
+static struct ProcessControl* get_pc(void){
+    return &pc;
 }
 
 void init_process(void){
-    struct Process* proc = find_unused_process();
-    ASSERT(proc == &process_table[0]);
+    struct ProcessControl* process_control;
+    struct Process* process;
+    struct HeadList* list;
+    //set addresses of processess
+    uint64_t addr[2] = {0x20000, 0x30000};
 
-    set_process_entry(proc);
+    process_control = get_pc();
+    list = &process_control->ready_list;
+
+    //set processess to ready state and add them to list
+    for(int i = 0; i < 2; i++){
+        process = find_unused_process();
+        set_process_entry(process,addr[i]);
+        append_list_tail(list, (struct List*)process);
+    }
 }
 
 void launch(void){
-    set_tss(&process_table[0]);
-    switch_vm(process_table[0].page_map);
-    pstart(process_table[0].tf);
+    struct ProcessControl *process_control;
+    struct Process* process;
+
+    process_control = get_pc();
+    process = (struct Process*)remove_list_head(&process_control->ready_list);
+    process->state = PROC_RUNNING;
+    process_control->current_process = process;
+
+
+    set_tss(process);
+    switch_vm(process->page_map);
+    pstart(process->tf);
+}
+
+
+static void switch_process(struct Process* prev, struct Process* current){
+    set_tss(current);
+    switch_vm(current->page_map);
+    swap(&prev->context, current->context);
+}
+
+static void schedule(void){
+    struct Process* prev_proc;
+    struct Process* current_proc;
+    struct ProcessControl* process_control;
+    struct HeadList* list;
+
+    process_control = get_pc();
+    prev_proc = process_control->current_process;
+    list = &process_control->ready_list;
+    ASSERT(!is_list_empty(list));
+
+    current_proc = (struct Process*)remove_list_head(list);
+    current_proc->state = PROC_RUNNING;
+    process_control->current_process = current_proc;
+    
+    switch_process(prev_proc, current_proc);
+}
+
+void yield(void){
+    struct ProcessControl* process_control;
+    struct Process* process;
+    struct HeadList* list;
+    
+    process_control = get_pc();
+    list = &process_control->ready_list;
+
+    if(is_list_empty(list)){
+        return;
+    }
+
+    process = process_control->current_process;
+    process->state = PROC_READY;
+    append_list_tail(list, (struct List*)process);
+    schedule();
 }

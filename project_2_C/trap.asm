@@ -27,6 +27,8 @@ global load_idt
 global load_cr3
 global pstart
 global read_cr2
+global swap
+global TrapReturn
 
 Trap:
     push rax
@@ -193,3 +195,23 @@ read_cr2:
 pstart:
     mov rsp,rdi
     jmp TrapReturn
+
+swap:
+    push rbx
+    push rbp
+    push r12
+    push r13
+    push r14
+    push r15
+
+    mov [rdi],rsp; changes kernel stk ptr from 1 arguement to the other
+    mov rsp,rsi; rdi is context of curr process, rsi is context of next process
+
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop rbp
+    pop rbx
+
+    ret

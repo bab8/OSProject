@@ -2,10 +2,13 @@
 #define _PROCESS_H_
 
 #include "trap.h"
+#include "lib.h"
 
 struct Process { //PCB: process control block, save in kernel space
+    struct List* next;
     int pid; //process id
     int state; //status of process
+    uint64_t context;//used to save rsp val when processess are switched
     uint64_t page_map; //save page_map level 4 table
     uint64_t stack; //stack used for kernel mode
     struct TrapFrame* tf; //
@@ -30,14 +33,23 @@ struct TSS {
     uint16_t iopb;
 } __attribute__((packed));
 
+struct ProcessControl {
+    struct Process* current_process;
+    struct HeadList ready_list;
+};
+
 #define STACK_SIZE (2*1024*1024) //size of kernel stack 2mb
 #define NUM_PROC 10 
 //process states
 #define PROC_UNUSED 0 
 #define PROC_INIT 1
+#define PROC_RUNNING 2
+#define PROC_READY 3
 
 void init_process(void);
 void launch(void);
 void pstart(struct TrapFrame* tf);
+void swap(uint64_t* prev, uint64_t next);
+void yield(void);
 
 #endif
