@@ -20,6 +20,7 @@ global vector18
 global vector19
 global vector32
 global vector39
+global sysint
 global eoi
 global read_isr
 global load_idt
@@ -153,6 +154,11 @@ vector19:
 vector32:
     push 0; error code
     push 32; index value to know which interrupt
+    jmp Trap
+
+sysint:
+    push 0
+    push 0x80; software int
     jmp Trap
 
 vector39:

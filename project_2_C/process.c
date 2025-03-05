@@ -8,7 +8,6 @@
 extern struct TSS Tss;
 static struct Process process_table[NUM_PROC]; //define process_table with max number processess
 static int pid_num = 1; // used to allocate new process with process id
-void main(void);
 
 static void set_tss(struct Process* proc){
     //assigns top of kernel stack to rsp0 in tss(jumps from ring3 to ring0)
@@ -55,7 +54,7 @@ static void set_process_entry(struct Process* proc){
     //set up process pages for kernel and user mode
     proc->page_map = setup_kvm();
     ASSERT(proc->page_map != 0);
-    ASSERT(setup_uvm(proc->page_map, (uint64_t)main, PAGE_SIZE));
+    ASSERT(setup_uvm(proc->page_map, (uint64_t)P2V(0x20000), 512*10));
 }
 
 void init_process(void){
@@ -69,9 +68,4 @@ void launch(void){
     set_tss(&process_table[0]);
     switch_vm(process_table[0].page_map);
     pstart(process_table[0].tf);
-}
-
-void main(void){
-    char *p = (char*)0xffff800000200020;
-    *p = 1;
 }
