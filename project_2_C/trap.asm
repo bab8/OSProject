@@ -24,6 +24,8 @@ global eoi
 global read_isr
 global load_idt
 global load_cr3
+global pstart
+global read_cr2
 
 Trap:
     push rax
@@ -41,9 +43,6 @@ Trap:
     push r13
     push r14
     push r15
-
-    inc byte[0xb8010]
-    mov byte[0xb8011], 0xe
 
     mov rdi,rsp; first argument passed, arguement is stack ptr
     call handler
@@ -180,3 +179,11 @@ load_cr3:
     mov rax,rdi
     mov cr3,rax
     ret
+
+read_cr2:
+    mov rax,cr2
+    ret
+
+pstart:
+    mov rsp,rdi
+    jmp TrapReturn

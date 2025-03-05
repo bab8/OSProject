@@ -1,4 +1,5 @@
 #include "trap.h"
+#include "print.h"
 
 static struct IdtPtr idt_pointer; //static to avoid reference in other files
 static struct IdtEntry vectors[256]; //static to avoid reference in other files, holds all interrupt vectors
@@ -59,6 +60,7 @@ void handler(struct TrapFrame *tf){//trap frame is stack ptr as seen in asm file
             break;
         //stop system for all other interrupts
         default:
+            printk("[Error %d at ring %d] %d:%x %x", tf->trapno, (tf->cs & 3), tf->errorcode, read_cr2(), tf->rip);
             while(1){}
     }
 }
