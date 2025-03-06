@@ -14,6 +14,7 @@ start:
     test edx,(1<<26); check for 1gb support on 26 bit
     jz NotSupport
 
+;loads kernel file
 LoadKernel:
     mov si, ReadPacket; si(source index register)
     mov word[si], 0x10; size = 16 bytes
@@ -21,6 +22,33 @@ LoadKernel:
     mov word[si + 4],0; offset = 0, 0x10000 will overflow in a single word so we set offset to 0 and tehn use the segment to calculate 0x10000, where the kernel will be placed
     mov word[si + 6], 0x1000; segement piece of address (0 + 16*0x1000[segement] = 0x10000), physical address for kernel will be 0x10000
     mov dword[si + 8],6; low address first sector is mbr, next five is loader file, so kernel starts at sector 7
+    mov dword[si + 12], 0; high address 
+    mov dl, [DriveId]
+    mov ah, 0x42; we want to use disk extension service
+    int 0x13
+    jc ReadError; carry flag will be set if sectors cannot be read
+
+;loads user file
+LoadUser1:
+    mov si, ReadPacket; si(source index register)
+    mov word[si], 0x10; size = 16 bytes
+    mov word[si+2], 10; sectors = 10
+    mov word[si + 4],0; offset = 0, 0x20000 will overflow in a single word so we set offset to 0 and tehn use the segment to calculate 0x20000, where the kernel will be placed
+    mov word[si + 6], 0x2000; segement piece of address (0 + 16*0x2000[segement] = 0x20000), physical address for user will be 0x20000
+    mov dword[si + 8],106; sector start for user file
+    mov dword[si + 12], 0; high address 
+    mov dl, [DriveId]
+    mov ah, 0x42; we want to use disk extension service
+    int 0x13
+    jc ReadError; carry flag will be set if sectors cannot be read
+
+LoadUser2:
+    mov si, ReadPacket; si(source index register)
+    mov word[si], 0x10; size = 16 bytes
+    mov word[si+2], 10; sectors = 10
+    mov word[si + 4],0; 
+    mov word[si + 6], 0x3000; s
+    mov dword[si + 8],116; sector start for user file
     mov dword[si + 12], 0; high address 
     mov dl, [DriveId]
     mov ah, 0x42; we want to use disk extension service

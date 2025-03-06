@@ -1,12 +1,9 @@
 #include "stdint.h"
 #include "stdarg.h"
-#include "print.h"
-#include "lib.h"
-#include "memory.h"
 
-//struct to hold screen print position
-static struct ScreenBuffer screen_buffer = {(char*)P2V(0xb8000), 0, 0};
+extern int writeu(char* buffer, int buffer_size);
 
+/*User mode print library for OS*/
 static int udecimal_to_string(char* buffer, int position, uint64_t digits){
     char digits_map[10] = "0123456789";
     char digits_buffer[25];
@@ -74,44 +71,7 @@ static int read_string(char* buffer, int position, const char* string){
     return index;
 }
 
-void write_screen(const char* buffer,int size, char color){
-    struct ScreenBuffer *sb = &screen_buffer;
-    int column = sb->column;
-    int row = sb->row;
-
-    for(int i = 0; i < size; i++){
-        //scrolling screen
-        if(row >= 25){
-            //copy the line
-            memcpy(sb->buffer,sb->buffer+LINE_SIZE,LINE_SIZE*24);
-            //empty the last line
-            memset(sb->buffer+LINE_SIZE*24,0,LINE_SIZE);
-            row--;
-        }
-        //move row for newline char
-        if(buffer[i] == '\n'){
-            column = 0;
-            row++;
-        }
-        //print char to screen and move position
-        else{
-            sb->buffer[column*2+row*LINE_SIZE] = buffer[i];
-            sb->buffer[column*2+row*LINE_SIZE+1] = color;
-
-            column++;
-
-            if(column >= 80){
-                column = 0;
-                row++;
-            }
-        }
-    }
-
-    sb->column = column;
-    sb->row = row;
-}
-
-int printk(const char *format, ...){
+int printf(const char *format, ...){
     char buffer[1024];
     int buffer_size = 0;
     int64_t integer = 0;
@@ -160,8 +120,7 @@ int printk(const char *format, ...){
         }
     }
 
-    //0xf is our text color(white)
-    write_screen(buffer,buffer_size, 0xf);
+    buffer_size = writeu(buffer,buffer_size);
     va_end(args);
 
     return buffer_size;

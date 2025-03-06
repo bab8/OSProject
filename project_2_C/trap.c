@@ -1,4 +1,8 @@
 #include "trap.h"
+#include "print.h"
+#include "syscall.h"
+#include "process.h"
+#include "debug.h"
 
 static struct IdtPtr idt_pointer; //static to avoid reference in other files
 static struct IdtEntry vectors[256]; //static to avoid reference in other files, holds all interrupt vectors
@@ -33,6 +37,7 @@ void init_idt(void){
     init_idt_entry(&vectors[19],(uint64_t)vector19,0x8e);
     init_idt_entry(&vectors[32],(uint64_t)vector32,0x8e);
     init_idt_entry(&vectors[39],(uint64_t)vector39,0x8e);
+    init_idt_entry(&vectors[0x80],(uint64_t)sysint,0xee);//0xee because dpl is set to 3 instead of zero bc int is fired from ring 3
 
     //init idt ptr
     idt_pointer.limit = sizeof(vectors)-1;
@@ -57,8 +62,17 @@ void handler(struct TrapFrame *tf){//trap frame is stack ptr as seen in asm file
                 eoi();
             }
             break;
+        //software interrupt
+        case 0x80:
+            system_call(tf);
+            break;
         //stop system for all other interrupts
         default:
+            printk("[Error %d at ring %d] %d:%x %x", tf->trapno, (tf->cs & 3), tf->errorcode, read_cr2(), tf->rip);
             while(1){}
+    }
+
+    if(tf->trapno == 32){
+        yield();
     }
 }

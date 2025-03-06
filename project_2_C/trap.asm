@@ -20,10 +20,15 @@ global vector18
 global vector19
 global vector32
 global vector39
+global sysint
 global eoi
 global read_isr
 global load_idt
 global load_cr3
+global pstart
+global read_cr2
+global swap
+global TrapReturn
 
 Trap:
     push rax
@@ -41,9 +46,6 @@ Trap:
     push r13
     push r14
     push r15
-
-    inc byte[0xb8010]
-    mov byte[0xb8011], 0xe
 
     mov rdi,rsp; first argument passed, arguement is stack ptr
     call handler
@@ -156,6 +158,11 @@ vector32:
     push 32; index value to know which interrupt
     jmp Trap
 
+sysint:
+    push 0
+    push 0x80; software int
+    jmp Trap
+
 vector39:
     push 0; error code
     push 39; index value to know which interrupt
@@ -179,4 +186,32 @@ load_idt:
 load_cr3:
     mov rax,rdi
     mov cr3,rax
+    ret
+
+read_cr2:
+    mov rax,cr2
+    ret
+
+pstart:
+    mov rsp,rdi
+    jmp TrapReturn
+
+swap:
+    push rbx
+    push rbp
+    push r12
+    push r13
+    push r14
+    push r15
+
+    mov [rdi],rsp; changes kernel stk ptr from 1 arguement to the other
+    mov rsp,rsi; rdi is context of curr process, rsi is context of next process
+
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop rbp
+    pop rbx
+
     ret

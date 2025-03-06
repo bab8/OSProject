@@ -1,6 +1,8 @@
 ;[BITS 64]
 ;[ORG 0x200000], address location set by linker script link.lds
 section .data; label defined for linker script
+global Tss
+
 Gdt64:
     dq 0; first entry empty
     dq 0x0020980000000000; second entry code has attribute D=0 if long bit is set-L(long bit)=1 so we are in 64-bit mode not compatability mode-P(present bit)=1(else exception)-DPL(set privilege level)=0-1-1(descriptor is code segment)-C(conforming bit)=0
