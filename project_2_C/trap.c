@@ -79,8 +79,14 @@ void handler(struct TrapFrame *tf){//trap frame is stack ptr as seen in asm file
             break;
         //stop system for all other interrupts
         default:
-            printk("[Error %d at ring %d] %d:%x %x", tf->trapno, (tf->cs & 3), tf->errorcode, read_cr2(), tf->rip);
-            while(1){}
+            //if cs & 3 = 3 then we are in user mode
+            if((tf->cs & 3) == 3){
+                printk("Exception is %d\n", tf->trapno);
+                exit();
+            }else{
+                while(1){}
+            }
+            //printk("[Error %d at ring %d] %d:%x %x", tf->trapno, (tf->cs & 3), tf->errorcode, read_cr2(), tf->rip);
     }
 
     if(tf->trapno == 32){
