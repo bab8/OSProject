@@ -1,6 +1,7 @@
 section .text
 
 global writeu
+global sleepu
 
 writeu:
     sub rsp,16 ;allocate 16 bytes for arguements
@@ -14,4 +15,17 @@ writeu:
     int 0x80; software int
 
     add rsp,16; restore stack 
+    ret
+
+sleepu:
+    sub rsp,8; one param
+    mov eax,1; index 1 for sleep in kernel
+
+    mov [rsp],rdi
+    mov rdi,1; num args
+    mov rsi,rsp; address of args
+
+    int 0x80
+
+    add rsp,8
     ret

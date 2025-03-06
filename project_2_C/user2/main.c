@@ -5,9 +5,8 @@ int main(void){
     int64_t counter = 0;
 
     while(1){
-        if(counter % 100000 == 0)
-            printf("process2 %d\n",counter);
-        counter++;
+        printf("process2 %d\n",counter);
+        sleepu(100);//roughly 1 second becuase of 10ms int timer
     }
     return 0;
 }
