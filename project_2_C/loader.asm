@@ -55,6 +55,19 @@ LoadUser2:
     int 0x13
     jc ReadError; carry flag will be set if sectors cannot be read
 
+LoadUser3:
+    mov si, ReadPacket; si(source index register)
+    mov word[si], 0x10; size = 16 bytes
+    mov word[si+2], 10; sectors = 10
+    mov word[si + 4],0; 
+    mov word[si + 6], 0x4000; s
+    mov dword[si + 8],126; sector start for user file
+    mov dword[si + 12], 0; high address 
+    mov dl, [DriveId]
+    mov ah, 0x42; we want to use disk extension service
+    int 0x13
+    jc ReadError; carry flag will be set if sectors cannot be read
+
 GetMemInfoStart:;use to get info on memory address block to see what memory is avaible to be used
     mov eax,0xe820
     mov edx,0x534d4150; ascii code for smap

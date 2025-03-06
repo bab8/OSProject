@@ -73,13 +73,13 @@ void init_process(void){
     struct Process* process;
     struct HeadList* list;
     //set addresses of processess
-    uint64_t addr[2] = {0x20000, 0x30000};
+    uint64_t addr[3] = {0x20000, 0x30000, 0x40000};
 
     process_control = get_pc();
     list = &process_control->ready_list;
 
     //set processess to ready state and add them to list
-    for(int i = 0; i < 2; i++){
+    for(int i = 0; i < 3; i++){
         process = find_unused_process();
         set_process_entry(process,addr[i]);
         append_list_tail(list, (struct List*)process);
@@ -142,4 +142,75 @@ void yield(void){
     process->state = PROC_READY;
     append_list_tail(list, (struct List*)process);
     schedule();
+}
+
+void sleep(int wait){
+    struct ProcessControl* process_control;
+    struct Process* process;
+
+    process_control = get_pc();
+    process = process_control->current_process;
+    process->state = PROC_SLEEP;
+    process->wait = wait;
+
+    append_list_tail(&process_control->wait_list, (struct List*)process);
+    schedule();
+}
+
+void wake_up(int wait){
+    struct ProcessControl* process_control;
+    struct Process* process;
+    struct HeadList* ready_list;
+    struct HeadList* wait_list;
+
+    process_control = get_pc();
+    ready_list = &process_control->ready_list;
+    wait_list = &process_control->wait_list;
+    process = (struct Process*)remove_list(wait_list,wait);
+
+    while(process != NULL){
+        process->state = PROC_READY;
+        append_list_tail(ready_list, (struct List*)process);
+        process = (struct Process*)remove_list(wait_list,wait);
+    }
+}
+
+void exit(void){
+    struct ProcessControl* process_control;
+    struct Process* process;
+    struct HeadList* list;
+
+    process_control = get_pc();
+    process = process_control->current_process;
+    process->state = PROC_KILLED;
+
+    list = &process_control->kill_list;
+    append_list_tail(list,(struct List*)process);
+
+    //process 1 will kill processes and could be asleep so we wake it up with its pid
+    wake_up(1);
+    schedule();
+}
+
+void wait(void){
+    struct ProcessControl* process_control;
+    struct Process* process;
+    struct HeadList* list;
+
+    process_control = get_pc();
+    list = &process_control->kill_list;
+
+    while(1){
+        if(!is_list_empty(list)){
+            process = (struct Process*)remove_list_head(list);
+            ASSERT(process->state == PROC_KILLED);
+
+            kfree(process->stack);
+            free_vm(process->page_map);
+            memset(process,0,sizeof(struct Process));
+        }else{
+            //1 is pid of the process
+            sleep(1);
+        }
+    }
 }

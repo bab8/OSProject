@@ -2,6 +2,5 @@
 #define _LIB_H_
 
 int printf(const char *format, ...);
-void waitu(void);
 
 #endif

@@ -6,6 +6,7 @@
 
 static struct IdtPtr idt_pointer; //static to avoid reference in other files
 static struct IdtEntry vectors[256]; //static to avoid reference in other files, holds all interrupt vectors
+static uint64_t ticks;
 
 static void init_idt_entry(struct IdtEntry *entry, uint64_t addr, uint8_t attribute){
     entry->low = (uint16_t)addr;
@@ -46,12 +47,22 @@ void init_idt(void){
     load_idt(&idt_pointer);
 }
 
+uint64_t get_ticks(void){
+    return ticks;
+}
+
+static void timer_handler(void){
+    ticks++;
+    wake_up(-1);
+}
+
 void handler(struct TrapFrame *tf){//trap frame is stack ptr as seen in asm file
     unsigned char isr_value;
 
     switch(tf->trapno){
         //timer interrupt
         case 32:
+            timer_handler();
             eoi();
             break;
         //spurious interrupt
@@ -68,8 +79,14 @@ void handler(struct TrapFrame *tf){//trap frame is stack ptr as seen in asm file
             break;
         //stop system for all other interrupts
         default:
-            printk("[Error %d at ring %d] %d:%x %x", tf->trapno, (tf->cs & 3), tf->errorcode, read_cr2(), tf->rip);
-            while(1){}
+            //if cs & 3 = 3 then we are in user mode
+            if((tf->cs & 3) == 3){
+                printk("Exception is %d\n", tf->trapno);
+                exit();
+            }else{
+                while(1){}
+            }
+            //printk("[Error %d at ring %d] %d:%x %x", tf->trapno, (tf->cs & 3), tf->errorcode, read_cr2(), tf->rip);
     }
 
     if(tf->trapno == 32){
