@@ -1,14 +1,82 @@
 #include "lib.h"
+#include "console.h"
 #include "stdint.h"
 
+static void cmd_get_total_memory(void){
+    uint64_t total;
+
+    total = get_total_memoryu();
+    printf("Total Memory is %dMB\n", total);
+}
+
+static int read_cmd(char *buffer){
+    char ch[2] = { 0 };
+    int buffer_size = 0;
+
+    while(1){
+        ch[0] = keyboard_readu();
+
+        //command issued or buffer exceeded
+        if(ch[0] == '\n' || buffer_size >= 80){
+            printf("%s",ch);
+            break;
+        }
+        //character deleted
+        else if(ch[0] == '\b'){
+            //don't delete if no char on screen
+            if(buffer_size > 0){
+                buffer_size--;
+                printf("%s",ch);
+            }
+        }else{
+            //print char
+            buffer[buffer_size++] = ch[0];
+            printf("%s", ch);
+        }
+    }
+    return buffer_size;
+}
+
+static int parse_cmd(char* buffer, int buffer_size){
+    //default is invalid cmd
+    int cmd = -1;
+
+    //check if cmd is totalmem
+    if(buffer_size == 8 && (!memcmp("totalmem", buffer, 8))){
+        cmd = 0;
+    }
+
+    return cmd;
+}
+
+static void execute_cmd(int cmd){
+    CmdFunc cmd_list[1] = {cmd_get_total_memory};
+
+    if(cmd == 0){
+        cmd_list[0]();
+    }
+}
+
 int main(void){
+    char buffer[80] = { 0 };
+    int buffer_size = 0;
+    int cmd = 0;
 
+    while(1){
+        printf("Shell# ");
+        buffer_size = read_cmd(buffer);
 
-    //attempt to acces kernel space to test exception
-    char *p = (char*)0xffff800000200200;
+        if(buffer_size == 0){
+            continue;
+        }
 
-    *p = 1;
-    printf("process2\n");
-    sleepu(100);//roughly 1 second becuase of 10ms int timer
+        cmd = parse_cmd(buffer,buffer_size);
+
+        if(cmd < 0){
+            printf("Command Not Found!\n");
+        }else{
+            execute_cmd(cmd);
+        }
+    }
     return 0;
 }
