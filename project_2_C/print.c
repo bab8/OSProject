@@ -93,6 +93,21 @@ void write_screen(const char* buffer,int size, char color){
             column = 0;
             row++;
         }
+        else if(buffer[i] == '\b'){
+            //if at beginning of screen do nothing
+            if(column == 0 && row == 0){
+                continue;
+            }
+            //if at end of column go back a line
+            if(column == 0){
+                row--;
+                column = 80;
+            }
+
+            column -= 1;
+            sb->buffer[column*2+row*LINE_SIZE] = 0;
+            sb->buffer[column*2+row*LINE_SIZE+1] = 0;
+        }
         //print char to screen and move position
         else{
             sb->buffer[column*2+row*LINE_SIZE] = buffer[i];

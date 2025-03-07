@@ -2,6 +2,7 @@
 #include "print.h"
 #include "syscall.h"
 #include "process.h"
+#include "keyboard.h"
 #include "debug.h"
 
 static struct IdtPtr idt_pointer; //static to avoid reference in other files
@@ -37,6 +38,7 @@ void init_idt(void){
     init_idt_entry(&vectors[18],(uint64_t)vector18,0x8e);
     init_idt_entry(&vectors[19],(uint64_t)vector19,0x8e);
     init_idt_entry(&vectors[32],(uint64_t)vector32,0x8e);
+    init_idt_entry(&vectors[33],(uint64_t)vector33,0x8e);
     init_idt_entry(&vectors[39],(uint64_t)vector39,0x8e);
     init_idt_entry(&vectors[0x80],(uint64_t)sysint,0xee);//0xee because dpl is set to 3 instead of zero bc int is fired from ring 3
 
@@ -63,6 +65,11 @@ void handler(struct TrapFrame *tf){//trap frame is stack ptr as seen in asm file
         //timer interrupt
         case 32:
             timer_handler();
+            eoi();
+            break;
+        //keyboard interrupt
+        case 33:
+            keyboard_handler();
             eoi();
             break;
         //spurious interrupt

@@ -115,7 +115,7 @@ InitPIC:        ; bits: 765-4(init command followed by another 3)-3-2-1-0(use la
     out 0x21,al; bits: 76-54(fully nested mode)-32(buffered mode)-1(auto interrupt end)-0(mode) 
     out 0xa1,al; 00-00-0-1(x86 system used) -> 00000001
 
-    mov al,11111110b; mask all parent IRQs except 0 so that only 0 will fire
+    mov al,11111100b; mask all parent IRQs except 0 so that only 0 will fire
     out 0x21,al
     mov al,11111111b; mask all child IQS
     out 0xa1,al

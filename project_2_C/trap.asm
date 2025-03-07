@@ -19,6 +19,7 @@ global vector17
 global vector18
 global vector19
 global vector32
+global vector33
 global vector39
 global sysint
 global eoi
@@ -28,7 +29,9 @@ global load_cr3
 global pstart
 global read_cr2
 global swap
+global in_byte
 global TrapReturn
+
 
 Trap:
     push rax
@@ -163,6 +166,11 @@ sysint:
     push 0x80; software int
     jmp Trap
 
+vector33:
+    push 0; error code
+    push 33; index value to know which interrupt
+    jmp Trap
+
 vector39:
     push 0; error code
     push 39; index value to know which interrupt
@@ -214,4 +222,9 @@ swap:
     pop rbp
     pop rbx
 
+    ret
+
+in_byte:;used to read input from devices
+    mov rdx,rdi
+    in al,dx
     ret
