@@ -10,11 +10,11 @@ static void free_region(uint64_t v, uint64_t r);
 static struct FreeMemRegion free_mem_region[50]; //assure 50 blocks of free regions of memory
 static struct Page free_memory;
 static uint64_t memory_end;
+uint64_t total_mem;
 extern char end; //provided by linker not defined here
 
 void init_memory(void){
     int32_t count = *(int32_t*)0x9000; //number of memory regions stored here (done in loader file)
-    uint64_t total_mem = 0;
     struct E820 *mem_map = (struct E820*)0x9008; //holds map retrieved by BIOS service E820
     int free_region_count = 0;
 
@@ -50,6 +50,10 @@ void init_memory(void){
 
     memory_end = (uint64_t)free_memory.next+PAGE_SIZE; //pts to last page we collect
     printk("%x\n",memory_end);
+}
+
+uint64_t get_total_memory(void){
+    return total_mem/1024/1024;
 }
 
 //divides region into 2mb pages and collects
@@ -199,7 +203,7 @@ void init_kvm(void){
     uint64_t page_map = setup_kvm();
     ASSERT(page_map != 0);
     switch_vm(page_map);
-    printk("memory manager is now working");
+    printk("memory manager is now working\n");
 }
 
 bool setup_uvm(uint64_t map, uint64_t start, int size){
