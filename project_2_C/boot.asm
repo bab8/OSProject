@@ -20,7 +20,7 @@ TestDiskExstention:
 LoadLoader:
     mov si, ReadPacket; si(source index register)
     mov word[si], 0x10; size = 16 bytes
-    mov word[si+2], 5; sectors = 5(small loader file)
+    mov word[si+2], 15; sectors = 15(small loader file)
     mov word[si + 4],0x7e00; offset = 0x7e00, location of loader file, which is right after mbr which starts at 0x7c00 and is 512 bytes
     mov word[si + 6], 0; segement piece of address (0x7e00 + 16*0[segement] = 0x7e00)
     mov dword[si + 8],1; low address (LBA is zero based address so sector 0 is the first sector, sector 1 is the second sector and so on)
@@ -55,11 +55,11 @@ ReadPacket: times 16 db 0; 16 byte structure (0[first word] size, 2 number of se
 times (0x1be-($-$$)) db 0; repeat command number of times, $$ means start of section, $-$$ means from start to end of msg, instruction fills from end of msg ($) to 0x1be with zeros
 
     db 0x80; boot indicator
-    db 0,2,0; starting chs(cylinder,head,sector)
-    db 0x0f0; type
-    db 0xff, 0xff, 0xff; ending chs
-    dd 1; starting sector logical block address
-    dd (20*16*63-1); size
+    db 1,1,0; starting chs(cylinder,head,sector)
+    db 0x06; type
+    db 0x0f, 0x3f, 0xCA; ending chs
+    dd 0x3f; starting sector logical block address
+    dd 0x031f11; size(stored in little endian in boot img at offset 001b)
 
     times (16*3) db 0
 
