@@ -1,6 +1,7 @@
 section .text
 
 global writeu
+global sleepu
 
 writeu:
     sub rsp,16 ;allocate 16 bytes for arguements
@@ -15,3 +16,4 @@ writeu:
 
     add rsp,16; restore stack 
     ret
+

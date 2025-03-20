@@ -136,13 +136,14 @@ InitPIC:        ; bits: 765-4(init command followed by another 3)-3-2-1-0(use la
     retf; set cs register with code
 
 KernelEntry:
-    ;xor ax,ax
-    ;mov ss,ax
+    xor ax,ax
+    mov ss,ax; init ss with 0 so when we return from int handler no exception is fired
+
     mov rsp,0xffff800000200000; point stack to kernel
     call KMain
-    ;sti; enable interrupt
 
-End:        
+End:       
+    sti; enable interrupts for idle process
     hlt
     jmp End
 
