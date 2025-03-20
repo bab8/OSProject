@@ -14,8 +14,8 @@ uint64_t total_mem;
 extern char end; //provided by linker not defined here
 
 void init_memory(void){
-    int32_t count = *(int32_t*)0x9000; //number of memory regions stored here (done in loader file)
-    struct E820 *mem_map = (struct E820*)0x9008; //holds map retrieved by BIOS service E820
+    int32_t count = *(int32_t*)0x20000; //number of memory regions stored here (done in loader file)
+    struct E820 *mem_map = (struct E820*)0x20008; //holds map retrieved by BIOS service E820
     int free_region_count = 0;
 
     //make assumption that number of memory regions is less than 50
@@ -61,7 +61,7 @@ static void free_region(uint64_t v, uint64_t e){
     //align page, compare with end, if in range call free function
     for(uint64_t start = PA_UP(v);start+PAGE_SIZE <= e; start += PAGE_SIZE){
         //check 1gb of base of kernel to see if page being initialized is beyond our 1gb of ram
-        if(start+PAGE_SIZE <= 0xffff800040000000){
+        if(start+PAGE_SIZE <= 0xffff800030000000){
             kfree(start);
         }
     }
@@ -73,7 +73,7 @@ void kfree(uint64_t v){
     //make sure virtual address is above kernel end
     ASSERT(v >= (uint64_t)&end);
     //make sure page address is within allowed ram
-    ASSERT(v+PAGE_SIZE <= 0xffff800040000000);
+    ASSERT(v+PAGE_SIZE <= 0xffff800030000000);
 
     //free_memory is head of linked list,make head of listpt to current page
     struct Page *page_address = (struct Page*) v;
@@ -91,7 +91,7 @@ void* kalloc(void){
         //make sure virtual address is above kernel end
         ASSERT((uint64_t)page_address >= (uint64_t)&end);
         //make sure page address is within allowed ram 
-        ASSERT((uint64_t)page_address+PAGE_SIZE <= 0xffff800040000000);
+        ASSERT((uint64_t)page_address+PAGE_SIZE <= 0xffff800030000000);
 
         //move head of list pt to next page address
         free_memory.next = page_address->next;
@@ -191,7 +191,7 @@ uint64_t setup_kvm(void){
     if(page_map != 0){
         memset((void*)page_map, 0, PAGE_SIZE);
         //pass page map, give start vaddr of KERNEL BASE, end vaddr of memory end, give physical adr of kernel, give attributes present and writable but not user
-        if(!map_pages(page_map, KERNEL_BASE, memory_end, V2P(KERNEL_BASE), PTE_P|PTE_W)){
+        if(!map_pages(page_map, KERNEL_BASE, P2V(0x40000000), V2P(KERNEL_BASE), PTE_P|PTE_W)){
             free_vm(page_map);
             page_map = 0;
         }
