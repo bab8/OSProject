@@ -3,12 +3,14 @@
 
 #include "trap.h"
 #include "lib.h"
+#include "file.h"
 
 struct Process { //PCB: process control block, save in kernel space
     struct List* next;
     int pid; //process id
     int state; //status of process
     int wait;
+    struct FileDesc* file[100];
     uint64_t context;//used to save rsp val when processess are switched
     uint64_t page_map; //save page_map level 4 table
     uint64_t stack; //stack used for kernel mode
