@@ -127,7 +127,7 @@ static uint32_t search_file(char* path){
 
         for(uint32_t i = 0; i < root_entry_count; i++){
             //skip over delted of emtpy file entries
-            if(dir_entry[i].name[0] == ENTRY_EMPTY || dir_entry[i].name[0] == ENRTY_DELETED){
+            if(dir_entry[i].name[0] == ENTRY_EMPTY || dir_entry[i].name[0] == ENTRY_DELETED){
                 continue;
             }
             //long file names not supported so skip anything with the long file name attribute

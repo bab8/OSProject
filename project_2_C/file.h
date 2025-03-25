@@ -60,11 +60,12 @@ struct Process;
 
 #define FS_BASE 0x30000000
 #define ENTRY_EMPTY 0
-#define ENRTY_DELETED 0xe5
+#define ENTRY_DELETED 0xe5
 
+int read_file(struct Process* proc, int fd, void* buffer, uint32_t size);
 uint32_t get_file_size(struct Process* proc, int fd);
 int open_file(struct Process* proc, char* path_name);
-uint32_t close_file(struct Process* proc, int fd);
+void close_file(struct Process* proc, int fd);
 void init_fs(void);
 
 #endif

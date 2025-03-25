@@ -28,6 +28,12 @@ static uint16_t get_cluster_value(uint32_t cluster_index){
     return fat_table[cluster_index];
 }
 
+static uint32_t get_cluster_size(void){
+    struct BPB* bpb = get_fs_bpb();
+
+    return (uint32_t)bpb->bytes_per_sector * bpb->sectors_per_cluster;
+}
+
 static uint32_t get_cluster_offset(uint32_t index){
     uint32_t res_size;
     uint32_t fat_size;
@@ -44,12 +50,6 @@ static uint32_t get_cluster_offset(uint32_t index){
 
     return res_size + fat_size + dir_size +
            (index - 2) * ((uint32_t)p->sectors_per_cluster * p->bytes_per_sector);
-}
-
-static uint32_t get_cluster_size(void){
-    struct BPB* bpb = get_fs_bpb();
-
-    return (uint32_t)bpb->bytes_per_sector * bpb->sectors_per_cluster;
 }
 
 static uint32_t get_root_directory_count(void){
@@ -131,7 +131,7 @@ static uint32_t search_file(char* path){
 
         for(uint32_t i = 0; i < root_entry_count; i++){
             //skip over delted of emtpy file entries
-            if(dir_entry[i].name[0] == ENTRY_EMPTY || dir_entry[i].name[0] == ENRTY_DELETED){
+            if(dir_entry[i].name[0] == ENTRY_EMPTY || dir_entry[i].name[0] == ENTRY_DELETED){
                 continue;
             }
             //long file names not supported so skip anything with the long file name attribute
@@ -179,43 +179,42 @@ int open_file(struct Process* proc, char* path_name){
     for(int i = 0; i < 100; i++){
         //look for open file descriptor in process
         if(proc->file[i] == NULL){
-            fd = 1;
+            fd = i;
             break;
         }
-
-        //if none found return -1
-        if(fd == -1){
-            return -1;
-        }
-
-        //find free file descriptor table entry
-        for(int i = 0; i < PAGE_SIZE/ sizeof(struct FileDesc); i++){
-            if(file_desc_table[i].fcb == NULL){
-                file_desc_index = i;
-                break;
-            }
-        }
-
-        //if none found return -1
-        if(file_desc_index == -1){
-            return -1;
-        }
-
-        //search for file
-        entry_index = search_file(path_name);
-        //if file not found return -1 
-        if(entry_index == 0xffffffff){
-            return -1;
-        }
-
-        fcb_index = get_fcb(entry_index);
-
-        memset(&file_desc_table[file_desc_index], 0 , sizeof(struct FileDesc));
-        file_desc_table[file_desc_index].fcb = &fcb_table[fcb_index];
-        proc->file[fd] = &file_desc_table[file_desc_index];
-
-        return fd;
     }
+    //if none found return -1
+    if(fd == -1){
+        return -1;
+    }
+
+    //find free file descriptor table entry
+    for(int i = 0; i < PAGE_SIZE/ sizeof(struct FileDesc); i++){
+        if(file_desc_table[i].fcb == NULL){
+            file_desc_index = i;
+            break;
+        }
+    }
+
+    //if none found return -1
+    if(file_desc_index == -1){
+        return -1;
+    }
+
+    //search for file
+    entry_index = search_file(path_name);
+    //if file not found return -1 
+    if(entry_index == 0xffffffff){
+        return -1;
+    }
+
+    fcb_index = get_fcb(entry_index);
+
+    memset(&file_desc_table[file_desc_index], 0 , sizeof(struct FileDesc));
+    file_desc_table[file_desc_index].fcb = &fcb_table[fcb_index];
+    proc->file[fd] = &file_desc_table[file_desc_index];
+
+    return fd;
 }
 
 
@@ -239,11 +238,11 @@ static uint32_t read_raw_data(uint32_t cluster_index, char* buffer, uint32_t pos
         read_size = (offset + size) <= cluster_size ? size : (cluster_size - offset);
         data = (char*)((uint64_t)bpb + get_cluster_offset(index));
         memcpy(buffer, data + offset, read_size);
-        buffer+= read_size;
+        buffer += read_size;
         index = get_cluster_value(index);
     }
     
-    while(read_size < size && index >= 0xfff7){
+    while(read_size < size && index < 0xfff7){
         //get data using cluster index
         data = (char*)((uint64_t)bpb + get_cluster_offset(index));
 
@@ -263,7 +262,7 @@ static uint32_t read_raw_data(uint32_t cluster_index, char* buffer, uint32_t pos
     return read_size;
 }
 
-static uint32_t read_file(struct Process* proc, int fd, void* buffer, uint32_t size){
+int read_file(struct Process* proc, int fd, void* buffer, uint32_t size){
     uint32_t position = proc->file[fd]->position;
     uint32_t file_size = proc->file[fd]->fcb->file_size;
     uint32_t read_size;
@@ -279,7 +278,7 @@ static uint32_t read_file(struct Process* proc, int fd, void* buffer, uint32_t s
     return read_size;
 }
 
-uint32_t close_file(struct Process* proc, int fd){
+void close_file(struct Process* proc, int fd){
     put_fcb(proc->file[fd]->fcb);
 
     proc->file[fd]->fcb = NULL;
