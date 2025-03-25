@@ -61,14 +61,14 @@ static int sys_read_file(int64_t* argptr){
 
 static int sys_close_file(int64_t* argptr){
     struct ProcessControl *pc = get_pc();
-    close_file(pc->current_process, (char*)argptr[0]);
+    close_file(pc->current_process, argptr[0]);
 
     return 0;
 }
 
 static int sys_get_file_size(int64_t* argptr){
     struct ProcessControl *pc = get_pc();
-    return get_file_size(pc->current_process, (char*)argptr[0]);
+    return get_file_size(pc->current_process, argptr[0]);
 }
 
 void init_system_call(void){

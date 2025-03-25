@@ -44,7 +44,7 @@ struct DirEntry { //directory entry
 
 #define FS_BASE 0x30000000
 #define ENTRY_EMPTY 0
-#define ENRTY_DELETED 0xe5
+#define ENTRY_DELETED 0xe5
 
 int load_file(char* path, uint64_t addr);
 void init_fs(void);
