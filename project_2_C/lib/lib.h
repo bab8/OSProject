@@ -19,6 +19,7 @@ void memmove(void* dest, void* src, int size);
 void memcpy(void* dest, void* src, int size);
 int memcmp(void* src1, void* src2, int size);
 int get_total_memoryu(void);
+int read_root_directory(void* buffer)
 
 
 #endif

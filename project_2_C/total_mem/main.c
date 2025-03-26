@@ -3,7 +3,7 @@
 
 int main(void){
     int total = get_total_memoryu();
-    printf("total memory is %dmb", (int64_t)total);
+    printf("total memory is %dmb\n", (int64_t)total);
 
     return 0;
 }
