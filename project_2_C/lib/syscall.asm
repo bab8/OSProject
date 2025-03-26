@@ -10,6 +10,8 @@ global open_file
 global read_file
 global get_file_size
 global close_file
+global fork
+global exec
 
 writeu:
     sub rsp,16 ;allocate 16 bytes for arguements
@@ -47,11 +49,15 @@ exitu:
     ret
 
 waitu:
+    sub rsp,8
     mov eax,3
-    mov rdi,0
+    mov [rsp],rdi
+    mov rdi,1
+    mov rsi,rsp
 
     int 0x80
 
+    add rsp,8
     ret
 
 keyboard_readu:
@@ -125,3 +131,22 @@ close_file:
     add rsp,8;restore satck
     ret
 
+fork:
+    mov eax,10
+    xor edi,edi
+    int 0x80
+    
+    ret
+
+exec:
+    sub rsp,8
+    mov eax,11
+
+    mov [rsp],rdi
+    mov rdi,1
+    mov rsi,rsp
+    
+    int 0x80
+
+    add rsp,8
+    ret

@@ -54,6 +54,7 @@ struct FCB { //  file control block
 struct FileDesc {
     struct FCB* fcb;
     uint32_t position;
+    int count;
 };
 
 struct Process;
