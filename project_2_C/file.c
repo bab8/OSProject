@@ -286,12 +286,21 @@ void close_file(struct Process* proc, int fd){
     if(proc->file[fd]->count == 0){
         proc->file[fd]->fcb = NULL;
     }
-    
+
     proc->file[fd] = NULL;
 }
 
 uint32_t get_file_size(struct Process* proc, int fd){
     return proc->file[fd]->fcb->file_size;
+}
+
+int read_root_directory(char* buffer){
+    struct DirEntry* dir_entry = get_root_directory();
+    uint32_t count = get_root_directory_count();
+
+    memcpy(buffer,dir_entry, count * sizeof(struct DirEntry));
+
+    return count;
 }
 
 

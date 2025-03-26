@@ -68,5 +68,6 @@ uint32_t get_file_size(struct Process* proc, int fd);
 int open_file(struct Process* proc, char* path_name);
 void close_file(struct Process* proc, int fd);
 void init_fs(void);
+int read_root_directory(char* buffer);
 
 #endif

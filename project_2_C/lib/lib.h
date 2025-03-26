@@ -13,5 +13,13 @@ void close_file(int fd);
 int get_file_size(int fd);
 int fork(void);
 void exec(char* name);
+unsigned char keyboard_readu(void);
+void memset(void* buffer, char value, int size);
+void memmove(void* dest, void* src, int size);
+void memcpy(void* dest, void* src, int size);
+int memcmp(void* src1, void* src2, int size);
+int get_total_memoryu(void);
+int read_root_directory(void* buffer)
+
 
 #endif
