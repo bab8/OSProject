@@ -62,6 +62,7 @@ void yield(void);
 void sleep(int wait);
 void wake_up(int wait);
 void exit(void);
-void wait(void);
+void wait(int pid);
+int fork(void);
 
 #endif

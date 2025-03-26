@@ -242,16 +242,17 @@ void exit(void){
     process_control = get_pc();
     process = process_control->current_process;
     process->state = PROC_KILLED;
+    process->wait = process->pid;
 
     list = &process_control->kill_list;
     append_list_tail(list,(struct List*)process);
 
     //process 1 will kill processes and could be asleep so we wake it up with its pid
-    wake_up(1);
+    wake_up(-3);
     schedule();
 }
 
-void wait(void){
+void wait(int pid){
     struct ProcessControl* process_control;
     struct Process* process;
     struct HeadList* list;
@@ -261,15 +262,66 @@ void wait(void){
 
     while(1){
         if(!is_list_empty(list)){
-            process = (struct Process*)remove_list_head(list);
-            ASSERT(process->state == PROC_KILLED);
+            process = (struct Process*)remove_list(list,pid);
+            if(process != NULL){
+                ASSERT(process->state == PROC_KILLED);
+                kfree(process->stack);
+                free_vm(process->page_map);
 
-            kfree(process->stack);
-            free_vm(process->page_map);
-            memset(process,0,sizeof(struct Process));
-        }else{
-            //1 is pid of the process
-            sleep(1);
+                //check for no closed files
+                for(int i = 0; i < 100; i++){
+                    if(process->file[i] != NULL){
+                        process->file[i]->fcb->count--;
+                        process->file[i]->count--;
+                        
+                        if(process->file[i]->count == 0){
+                            process->file[i]->fcb = NULL;
+                        }
+                    }
+                }
+                memset(process,0,sizeof(struct Process));
+                break;
+            }
+            
+        }
+        sleep(-3);
+    }
+}
+
+int fork(void){
+    struct ProcessControl* process_control;
+    struct Process* process;
+    struct Process* current_process;
+    struct HeadList* list;
+
+    process_control = get_pc();
+    current_process = process_control->current_process;
+    list = &process_control->ready_list;
+
+    process = alloc_new_process();
+    if(process == NULL){
+        ASSERT(0);
+        return -1;
+    }
+
+    if(copy_uvm(process->page_map, current_process->page_map,PAGE_SIZE)== false){
+        ASSERT(0);
+        return -1;
+    }
+
+    memcpy(process->file, current_process->file, 100 * sizeof(struct FileDesc*));
+
+    for(int i = 0; i < 100; i++){
+        if(process->file[i] != NULL){
+            process->file[i]->count++;
+            process->file[i]->fcb->count++;
         }
     }
+
+    memcpy(process->tf,current_process->tf,sizeof(struct TrapFrame));
+    process->tf->rax = 0;
+    process->state = 0;
+    append_list_tail(list, (struct List*)process);
+
+    return process->pid;
 }

@@ -1,23 +1,17 @@
 #include "lib.h"
 
 int main(void){
-    int fd;
-    int size;
-    char buffer[100] = { 0 };
+    int pid;
 
-    fd = open_file("TEST.BIN");
+    pid = fork();
 
-    if(fd == -1){
-        printf("open file failed");
+
+    // pid = 0 means forked process as defined in the fork function of the kernel file
+    if(pid == 0){
+        printf("this is a new process\n");
     } else{
-        size = get_file_size(fd);
-        size = read_file(fd,buffer, size);
-        
-        if(size != -1){
-            printf("%s\n",buffer);
-            printf("read %db in total",size);
-        } 
+        printf("this is the current process\n");
+        waitu(pid);
     }
-    while(1){}
     return 0;
 }
