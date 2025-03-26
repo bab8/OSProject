@@ -8,10 +8,10 @@ int main(void){
 
     // pid = 0 means forked process as defined in the fork function of the kernel file
     if(pid == 0){
-        printf("this is a new process\n");
+        exec("TEST.BIN");
     } else{
-        printf("this is the current process\n");
         waitu(pid);
+        printf("test process exits\n");
     }
     return 0;
 }
