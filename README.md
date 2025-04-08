@@ -1,5 +1,5 @@
 # OSProject
-This will be a repository made to showcase progress on projects centered around learning to make OS. Projects are made following 3 differnet UDemy Courses
+This will be a repository made to showcase progress on projects centered around learning to make OS. Projects are made following 2 differnet UDemy Courses, the code in these projects is typed out an annotated by me but the original code comes from the provided courses
 
 
 First Course Udemy Link: https://www.udemy.com/course/build-a-graphical-operating-system-from-scratch/?couponCode=PLOYALTY0923
